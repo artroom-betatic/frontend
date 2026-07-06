@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --background: #eef0f3;
+  --foreground: #1f2937;
+  --panel: #f9fafb;
+  --line: #e5e7eb;
+  --muted: #929aa8;
+  --primary: #307cff;
+  --danger: #fca5a5;
+  --subtle: #666666;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-danger: var(--danger);
+  --color-subtle: var(--subtle);
+  --font-sans: Pretendard, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Pretendard, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+::selection {
+  background: var(--primary);
+  color: white;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
