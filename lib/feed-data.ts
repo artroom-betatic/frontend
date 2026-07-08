@@ -254,10 +254,24 @@ export function getArtistProfile(username: string) {
   return artistByUsername.get(username);
 }
 
-export function getArtistPosts(username: string, limit = 6) {
-  return feedPosts.filter((post) => post.artist.username === username).slice(0, limit);
+export function getArtistProfiles() {
+  return artists;
+}
+
+export function getArtistPosts(username: string, limit?: number) {
+  const artistPosts = feedPosts.filter((post) => post.artist.username === username);
+
+  if (typeof limit !== "number") {
+    return artistPosts;
+  }
+
+  return artistPosts.slice(0, Math.max(0, limit));
 }
 
 export function getFeedPost(id: string) {
   return feedPosts.find((post) => post.id === id);
+}
+
+export function getFeedPosts() {
+  return feedPosts;
 }

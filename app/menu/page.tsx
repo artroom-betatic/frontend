@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 export default function MenuPage() {
   return (
     <AppFrame>
-      <MobileHeader title="전체메뉴" />
+      <MobileHeader backBehavior="history" backHref="/" title="전체메뉴" />
       <main className="px-6 pb-[96px] pt-5">
         <p className="text-xs leading-5 text-[#929aa8]">
-          작가 후원, 작품 구매, 커미션 의뢰, 정산 관리가 한 곳에서 이어지는
-          창작자 플랫폼입니다.
+          감상, 구매, 후원, 커미션, 정산까지 Artroom의 주요 흐름을 한 곳에서
+          시작합니다.
         </p>
         <MenuClient />
       </main>

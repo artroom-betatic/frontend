@@ -17,7 +17,7 @@ type SettingsListItemProps = {
   title: string;
 };
 
-function SettingsListIcon({ name }: { name: SettingsListItemIconName }) {
+export function SettingsListIcon({ name }: { name: SettingsListItemIconName }) {
   const iconClassName = "h-7 w-7 text-primary";
 
   if (name === "bell") {

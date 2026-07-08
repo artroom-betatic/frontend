@@ -26,10 +26,12 @@ type CreatorToolPageProps = {
     value: string;
   }[];
   checklist: string[];
+  backHref?: string;
   primaryAction?: CreatorToolPageAction;
 };
 
 export function CreatorToolPage({
+  backHref = "/my",
   checklist,
   fields,
   primaryAction = { href: "/my", label: "마이페이지로 돌아가기" },
@@ -38,7 +40,7 @@ export function CreatorToolPage({
 }: CreatorToolPageProps) {
   return (
     <AppFrame>
-      <MobileHeader title={title} backHref="/my" />
+      <MobileHeader backBehavior="history" backHref={backHref} title={title} />
       <main className="px-6 pb-8 pt-5">
         <p className="text-sm font-medium leading-6 text-subtle">{summary}</p>
 

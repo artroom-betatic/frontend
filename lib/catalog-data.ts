@@ -39,6 +39,28 @@ export type CommissionOfferDetail = {
   title: string;
 };
 
+export type SeriesEpisode = {
+  publishedAtLabel: string;
+  statusLabel: string;
+  title: string;
+};
+
+export type SeriesDetail = {
+  creator: CatalogCreator;
+  description: string;
+  episodeCountLabel: string;
+  episodes: SeriesEpisode[];
+  href: string;
+  imageAlt: string;
+  imageSrc: string;
+  lastUpdatedLabel: string;
+  slug: string;
+  statusLabel: string;
+  subtitle: string;
+  tags: CatalogTag[];
+  title: string;
+};
+
 const imageSrc = "/figma/home-post.png";
 
 export const artworkDetails: ArtworkDetail[] = [
@@ -106,12 +128,95 @@ export const commissionOfferDetails: CommissionOfferDetail[] = [
   },
 ];
 
+export const seriesDetails: SeriesDetail[] = [
+  {
+    creator: {
+      displayName: "작가의 이름",
+      href: "/artist/user_123",
+      username: "user_123",
+    },
+    description:
+      "달빛 왕국의 기사단을 따라가는 판타지 장편 시리즈입니다. 세계관 설정과 회차별 일러스트를 함께 감상할 수 있습니다.",
+    episodeCountLabel: "12화",
+    episodes: [
+      { publishedAtLabel: "공개됨", statusLabel: "무료", title: "1화. 달빛 숲의 입구" },
+      { publishedAtLabel: "공개됨", statusLabel: "멤버십", title: "2화. 은색 문장" },
+      { publishedAtLabel: "예약됨", statusLabel: "준비 중", title: "3화. 기사단의 밤" },
+    ],
+    href: "/series/moon-knight-chronicles",
+    imageAlt: "달빛 기사 연대기 대표 이미지",
+    imageSrc,
+    lastUpdatedLabel: "5시간 전 업데이트",
+    slug: "moon-knight-chronicles",
+    statusLabel: "연재 중",
+    subtitle: "판타지 장편",
+    tags: ["fantasy", "character"],
+    title: "달빛 기사 연대기",
+  },
+  {
+    creator: {
+      displayName: "nori_n_sullgi",
+      href: "/artist/nori_n_sullgi",
+      username: "nori_n_sullgi",
+    },
+    description:
+      "작업실에서 벌어지는 짧은 에피소드를 묶은 일상툰 시리즈입니다. 멤버십 선공개와 공개 회차가 함께 운영됩니다.",
+    episodeCountLabel: "24화",
+    episodes: [
+      { publishedAtLabel: "공개됨", statusLabel: "무료", title: "1화. 새 브러시를 산 날" },
+      { publishedAtLabel: "공개됨", statusLabel: "무료", title: "2화. 마감 전날의 책상" },
+      { publishedAtLabel: "선공개", statusLabel: "멤버십", title: "3화. 컬러칩 소동" },
+    ],
+    href: "/series/nori-studio-days",
+    imageAlt: "작업실 일상툰 시리즈 대표 이미지",
+    imageSrc,
+    lastUpdatedLabel: "12분 전 업데이트",
+    slug: "nori-studio-days",
+    statusLabel: "연재 중",
+    subtitle: "일상툰",
+    tags: ["membership", "character"],
+    title: "노리와 슬기의 작업실",
+  },
+  {
+    creator: {
+      displayName: "lechointheworld",
+      href: "/artist/lechointheworld",
+      username: "lechointheworld",
+    },
+    description:
+      "푸른 숲의 기사 세계관을 회차별 설정집으로 확장한 시리즈입니다. 완결 Ebook과 연결해 볼 수 있습니다.",
+    episodeCountLabel: "8화",
+    episodes: [
+      { publishedAtLabel: "공개됨", statusLabel: "무료", title: "1화. 숲의 지도" },
+      { publishedAtLabel: "공개됨", statusLabel: "유료", title: "2화. 기사와 서기관" },
+      { publishedAtLabel: "공개됨", statusLabel: "유료", title: "3화. 오래된 성벽" },
+    ],
+    href: "/series/blue-forest-archive",
+    imageAlt: "푸른 숲의 기사 아카이브 대표 이미지",
+    imageSrc,
+    lastUpdatedLabel: "어제 업데이트",
+    slug: "blue-forest-archive",
+    statusLabel: "완결",
+    subtitle: "설정집 시리즈",
+    tags: ["ebook", "fantasy"],
+    title: "푸른 숲의 기사 아카이브",
+  },
+];
+
 export function getArtworkDetail(slug: string) {
   return artworkDetails.find((artwork) => artwork.slug === slug);
 }
 
 export function getCommissionOffer(slug: string) {
   return commissionOfferDetails.find((commission) => commission.slug === slug);
+}
+
+export function getSeriesDetail(slug: string) {
+  return seriesDetails.find((series) => series.slug === slug);
+}
+
+export function getArtistSeries(username: string) {
+  return seriesDetails.filter((series) => series.creator.username === username);
 }
 
 export function getArtworkSlugs() {
@@ -122,6 +227,10 @@ export function getCommissionOfferSlugs() {
   return commissionOfferDetails.map((commission) => commission.slug);
 }
 
+export function getSeriesSlugs() {
+  return seriesDetails.map((series) => series.slug);
+}
+
 export function getCatalogSearchResults(): SearchResult[] {
   return [
     ...artworkDetails.map<SearchResult>((artwork) => ({
@@ -129,20 +238,10 @@ export function getCatalogSearchResults(): SearchResult[] {
       description: artwork.description,
       href: artwork.href,
       id: `artwork-${artwork.slug}`,
-      subtitle: artwork.subtitle,
+      subtitle: `${artwork.subtitle} · @${artwork.creator.username}`,
       tags: artwork.tags,
       title: artwork.title,
       type: "artwork",
-    })),
-    ...commissionOfferDetails.map<SearchResult>((commission) => ({
-      badges: commission.badges,
-      description: commission.description,
-      href: commission.href,
-      id: `commission-${commission.slug}`,
-      subtitle: commission.subtitle,
-      tags: commission.tags,
-      title: commission.title,
-      type: "commission",
     })),
   ];
 }

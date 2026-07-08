@@ -8,33 +8,35 @@ import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ScreenSection } from "@/components/screen-section";
 import { UiCard } from "@/components/ui-card";
-import { getArtworkSlugs } from "@/lib/catalog-data";
-import { getArtworkResource } from "@/lib/server-data";
+import {
+  getSeriesDetail,
+  getSeriesSlugs,
+} from "@/lib/catalog-data";
 
-type ArtworkPageProps = {
+type SeriesPageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export function generateStaticParams() {
-  return getArtworkSlugs().map((slug) => ({ slug }));
+  return getSeriesSlugs().map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
-}: ArtworkPageProps): Promise<Metadata> {
+}: SeriesPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const artwork = await getArtworkResource(decodeURIComponent(slug));
+  const series = getSeriesDetail(decodeURIComponent(slug));
 
   return {
-    title: artwork ? `${artwork.title} | Artroom` : "작품 | Artroom",
+    title: series ? `${series.title} | Artroom` : "시리즈 | Artroom",
   };
 }
 
-export default async function ArtworkPage({ params }: ArtworkPageProps) {
+export default async function SeriesPage({ params }: SeriesPageProps) {
   const { slug } = await params;
-  const artwork = await getArtworkResource(decodeURIComponent(slug));
+  const series = getSeriesDetail(decodeURIComponent(slug));
 
-  if (!artwork) {
+  if (!series) {
     notFound();
   }
 
@@ -42,70 +44,67 @@ export default async function ArtworkPage({ params }: ArtworkPageProps) {
     <AppFrame>
       <MobileHeader
         backBehavior="history"
-        backHref="/search?type=artwork"
-        title="작품 상세"
+        backHref={series.creator.href}
+        title="시리즈"
       />
       <main className="pb-[96px]">
         <section className="bg-white px-6 pb-6 pt-5">
           <div className="relative aspect-square overflow-hidden rounded-[6px] bg-[#f9fafb]">
             <Image
-              alt={artwork.imageAlt}
+              alt={series.imageAlt}
               className="object-cover"
               fill
               priority
               sizes="342px"
-              src={artwork.imageSrc}
+              src={series.imageSrc}
             />
           </div>
 
           <div className="mt-5">
             <p className="text-xs font-semibold text-[#307cff]">
-              {artwork.subtitle}
+              {series.subtitle} · {series.statusLabel}
             </p>
-            <h1 className="mt-2 text-xl font-bold text-black">{artwork.title}</h1>
+            <h1 className="mt-2 text-xl font-bold text-black">{series.title}</h1>
             <Link
               className="mt-2 block text-xs font-medium text-[#929aa8]"
-              href={artwork.creator.href}
+              href={series.creator.href}
             >
-              @{artwork.creator.username}
+              @{series.creator.username}
             </Link>
-            <p className="mt-4 text-2xl font-bold text-black">
-              {artwork.priceLabel}
+            <p className="mt-4 text-sm font-semibold text-black">
+              {series.episodeCountLabel} · {series.lastUpdatedLabel}
             </p>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-[6px]">
-            {artwork.tags.map((tag) => (
+            {series.tags.map((tag) => (
               <FigmaTag key={tag}>#{tag}</FigmaTag>
             ))}
           </div>
 
           <p className="mt-5 text-sm leading-6 text-[#1f2937]">
-            {artwork.description}
+            {series.description}
           </p>
-
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <Link
-              className="flex min-h-9 items-center justify-center rounded-[5px] bg-[#307cff] px-3 py-2 text-xs font-medium text-white"
-              href="/my"
-            >
-              내 소장함 확인
-            </Link>
-            <Link
-              className="flex min-h-9 items-center justify-center rounded-[5px] bg-[rgba(208,213,221,0.2)] px-3 py-2 text-xs font-medium text-black"
-              href={artwork.creator.href}
-            >
-              작가 프로필
-            </Link>
-          </div>
         </section>
 
         <div className="px-6">
-          <ScreenSection title="작품 구성">
+          <ScreenSection title="회차">
             <div className="grid gap-3">
-              {artwork.includes.map((item) => (
-                <UiCard className="bg-white" key={item}>
-                  <p className="text-sm font-semibold">{item}</p>
+              {series.episodes.map((episode) => (
+                <UiCard className="bg-white" key={episode.title}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-black">
+                        {episode.title}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-[#929aa8]">
+                        {episode.publishedAtLabel}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-md bg-[#f9fafb] px-3 py-2 text-xs font-semibold text-[#307cff]">
+                      {episode.statusLabel}
+                    </span>
+                  </div>
                 </UiCard>
               ))}
             </div>

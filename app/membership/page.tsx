@@ -10,7 +10,11 @@ export const metadata: Metadata = {
 export default function MembershipPage() {
   return (
     <AppFrame>
-      <MobileHeader title="가입한 멤버십 관리" backHref="/menu" />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/menu"
+        title="가입한 멤버십 관리"
+      />
       <main className="px-6 pb-8 pt-6">
         <MembershipManager />
       </main>
