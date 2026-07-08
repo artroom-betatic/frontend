@@ -3,12 +3,19 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppFrame } from "@/components/app-frame";
+import { ArtistFeedCard } from "@/components/artist-feed-card";
 import { ArtistActions } from "@/components/artist-actions";
 import { BottomNav } from "@/components/bottom-nav";
 import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { SeriesCard } from "@/components/series-card";
 import { UiCard } from "@/components/ui-card";
+import {
+  artworkDetails,
+  commissionOfferDetails,
+  getArtistSeries,
+} from "@/lib/catalog-data";
 import { getArtistResource } from "@/lib/server-data";
 
 type ArtistPageProps = {
@@ -35,10 +42,43 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
   }
 
   const { posts, profile } = resource;
+  const profileArtworks = artworkDetails.filter(
+    (artwork) => artwork.creator.username === profile.username,
+  );
+  const profileCommissions = commissionOfferDetails.filter(
+    (commission) => commission.creator.username === profile.username,
+  );
+  const profileSeries = getArtistSeries(profile.username);
+  const feedListHref = `/artist/${encodeURIComponent(profile.username)}/feeds`;
+  const seriesListHref = `/artist/${encodeURIComponent(profile.username)}/series`;
+  const artworkSearchHref = `/search?type=artwork&q=${encodeURIComponent(
+    profile.username,
+  )}`;
+  const profileEntrypoints = [
+    ...profileSeries.slice(0, 1).map(() => ({
+      description: `운영 중인 시리즈 ${profileSeries.length}개`,
+      href: "#profile-series",
+      title: "시리즈 보기",
+    })),
+    ...profileArtworks.slice(0, 1).map(() => ({
+      description: `등록된 작품 ${profileArtworks.length}개`,
+      href: "#profile-artworks",
+      title: "작품 보기",
+    })),
+    ...profileCommissions.slice(0, 1).map(() => ({
+      description: `열려 있는 커미션 ${profileCommissions.length}개`,
+      href: "#profile-commissions",
+      title: "커미션 안내",
+    })),
+  ];
 
   return (
     <AppFrame>
-      <MobileHeader title={profile.displayName} />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/search"
+        title={profile.displayName}
+      />
       <main className="pb-[96px]">
         <section className="bg-white px-6 pb-6 pt-5">
           <div className="flex items-start gap-4">
@@ -80,6 +120,30 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             </UiCard>
           </div>
 
+          {profileEntrypoints.length ? (
+            <div className="mt-5 grid gap-2">
+              {profileEntrypoints.map((entrypoint) => (
+                <Link
+                  className="flex items-center justify-between gap-3 rounded-[6px] border border-[#e5e7eb] bg-[#f9fafb] p-3"
+                  href={entrypoint.href}
+                  key={entrypoint.title}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-black">
+                      {entrypoint.title}
+                    </span>
+                    <span className="mt-1 block truncate text-xs font-medium text-[#929aa8]">
+                      {entrypoint.description}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-semibold text-[#307cff]">
+                    보기
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
           <ArtistActions
             artistUsername={profile.username}
             initialFollowing={profile.isFollowing}
@@ -87,29 +151,109 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
           />
         </section>
 
-        <section className="mt-2 bg-white px-6 py-5">
-          <h2 className="text-base font-semibold">최근 피드</h2>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {posts.map((post) => (
+        {profileArtworks.length ? (
+          <section className="mt-2 bg-white px-6 py-5" id="profile-artworks">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">작품</h2>
               <Link
-                aria-label={`${post.artist.displayName}의 피드 자세히 보기`}
-                className="block overflow-hidden rounded-[6px] border border-[#e5e7eb] bg-white"
-                href={post.href}
-                key={post.id}
+                className="text-xs font-semibold text-[#307cff]"
+                href={artworkSearchHref}
               >
-                <div className="relative aspect-square bg-[#f9fafb]">
-                  <Image
-                    alt={post.imageAlt}
-                    className="object-cover"
-                    fill
-                    sizes="164px"
-                    src={post.imageSrc}
-                  />
-                </div>
-                <p className="line-clamp-2 p-2 text-[10px] font-medium leading-4">
-                  {post.body}
-                </p>
+                더 보기
               </Link>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {profileArtworks.map((artwork) => (
+                <Link
+                  className="block rounded-[6px] border border-[#e5e7eb] bg-white p-3"
+                  href={artwork.href}
+                  key={artwork.slug}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[6px] bg-[#f9fafb]">
+                      <Image
+                        alt={artwork.imageAlt}
+                        className="object-cover"
+                        fill
+                        sizes="80px"
+                        src={artwork.imageSrc}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-black">
+                        {artwork.title}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[#307cff]">
+                        {artwork.priceLabel}
+                      </p>
+                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#1f2937]">
+                        {artwork.description}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {profileSeries.length ? (
+          <section className="mt-2 bg-white px-6 py-5" id="profile-series">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">시리즈</h2>
+              <Link
+                className="text-xs font-semibold text-[#307cff]"
+                href={seriesListHref}
+              >
+                더 보기
+              </Link>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {profileSeries.map((series) => (
+                <SeriesCard key={series.slug} series={series} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {profileCommissions.length ? (
+          <section className="mt-2 bg-white px-6 py-5" id="profile-commissions">
+            <h2 className="text-base font-semibold">커미션 안내</h2>
+            <div className="mt-4 grid gap-3">
+              {profileCommissions.map((commission) => (
+                <Link
+                  className="block rounded-[6px] border border-[#e5e7eb] bg-white p-3"
+                  href={commission.href}
+                  key={commission.slug}
+                >
+                  <p className="truncate text-sm font-semibold text-black">
+                    {commission.title}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-[#307cff]">
+                    {commission.priceLabel}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#1f2937]">
+                    {commission.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mt-2 bg-white px-6 py-5" id="profile-feed">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">최근 피드</h2>
+            <Link
+              className="text-xs font-semibold text-[#307cff]"
+              href={feedListHref}
+            >
+              더 보기
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-3">
+            {posts.map((post) => (
+              <ArtistFeedCard key={post.id} post={post} />
             ))}
           </div>
         </section>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CreatorToolPage } from "@/components/creator-tool-page";
 
 export const metadata: Metadata = {
-  title: "커미션 열기 | Artroom",
+  title: "받은 커미션 관리 | Artroom",
 };
 
 export default function CreatorCommissionsPage() {
@@ -18,8 +18,8 @@ export default function CreatorCommissionsPage() {
         { label: "슬롯", value: "0개" },
         { label: "기본 가격", value: "미설정" },
       ]}
-      summary="프로필에서 커미션 접수를 열기 전에 슬롯, 가격, 신청 조건을 정리합니다."
-      title="커미션 열기"
+      summary="프로필에서 받을 커미션의 슬롯, 가격, 신청 조건을 정리합니다."
+      title="받은 커미션 관리"
     />
   );
 }

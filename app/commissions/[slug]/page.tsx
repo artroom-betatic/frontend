@@ -42,7 +42,11 @@ export default async function CommissionOfferPage({
 
   return (
     <AppFrame>
-      <MobileHeader backHref="/search?tag=commission" title="커미션 상세" />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/search?tag=commission"
+        title="커미션 상세"
+      />
       <main className="pb-[96px]">
         <section className="bg-white px-6 pb-6 pt-5">
           <div className="relative aspect-square overflow-hidden rounded-[6px] bg-[#f9fafb]">
@@ -100,27 +104,31 @@ export default async function CommissionOfferPage({
           </div>
         </section>
 
-        <ScreenSection title="작업 과정">
-          <div className="grid gap-3 px-6">
-            {commission.process.map((item, index) => (
-              <UiCard className="bg-white" key={item}>
-                <p className="text-sm font-semibold">
-                  {index + 1}. {item}
-                </p>
-              </UiCard>
-            ))}
-          </div>
-        </ScreenSection>
+        <div className="px-6">
+          <ScreenSection title="작업 과정">
+            <div className="grid gap-3">
+              {commission.process.map((item, index) => (
+                <UiCard className="bg-white" key={item}>
+                  <p className="text-sm font-semibold">
+                    {index + 1}. {item}
+                  </p>
+                </UiCard>
+              ))}
+            </div>
+          </ScreenSection>
+        </div>
 
-        <ScreenSection title="제공 파일">
-          <div className="grid gap-3 px-6">
-            {commission.deliverables.map((item) => (
-              <UiCard className="bg-white" key={item}>
-                <p className="text-sm font-semibold">{item}</p>
-              </UiCard>
-            ))}
-          </div>
-        </ScreenSection>
+        <div className="px-6">
+          <ScreenSection title="제공 파일">
+            <div className="grid gap-3">
+              {commission.deliverables.map((item) => (
+                <UiCard className="bg-white" key={item}>
+                  <p className="text-sm font-semibold">{item}</p>
+                </UiCard>
+              ))}
+            </div>
+          </ScreenSection>
+        </div>
       </main>
       <BottomNav />
     </AppFrame>

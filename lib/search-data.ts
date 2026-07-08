@@ -1,4 +1,5 @@
 import { getCatalogSearchResults } from "./catalog-data";
+import { getArtistProfiles, getFeedPosts } from "./feed-data";
 import { searchTags } from "./search-tags";
 import type {
   SearchFilterTagId,
@@ -7,38 +8,75 @@ import type {
   SearchResult,
 } from "./search-types";
 
+function feedTags(text: string): SearchFilterTagId[] {
+  const tags: SearchFilterTagId[] = [];
+
+  if (/커미션|슬롯|신청/.test(text)) {
+    tags.push("commission");
+  }
+  if (/Ebook|단편|만화|작품/.test(text)) {
+    tags.push("ebook");
+  }
+  if (/멤버십|후원/.test(text)) {
+    tags.push("membership");
+  }
+  if (/캐릭터|굿즈|프로필/.test(text)) {
+    tags.push("character");
+  }
+  if (/판타지|배경|세계관/.test(text)) {
+    tags.push("fantasy");
+  }
+
+  return Array.from(new Set(tags));
+}
+
 const searchResults: SearchResult[] = [
-  {
-    id: "artist-nori",
-    type: "artist",
-    title: "nori_n_sullgi",
-    subtitle: "일러스트 / 인스타툰",
-    description: "판타지 세계관 일러스트와 월간 멤버십 비하인드를 운영합니다.",
-    tags: ["fantasy", "membership"],
-    badges: ["멤버십 운영"],
-    href: "/artist/nori_n_sullgi",
-  },
-  {
-    id: "artist-inme",
-    type: "artist",
-    title: "inme__diary",
-    subtitle: "캐릭터 / 굿즈",
-    description: "캐릭터 프로필, 굿즈용 일러스트, SD 커미션을 받습니다.",
-    tags: ["character", "commission"],
-    badges: ["커미션 가능"],
-    href: "/artist/inme__diary",
-  },
-  {
-    id: "artist-lecho",
-    type: "artist",
-    title: "lechointheworld",
-    subtitle: "만화 / Ebook",
-    description: "단편 만화와 설정집 Ebook을 판매하는 창작자입니다.",
-    tags: ["ebook", "fantasy"],
-    badges: ["디지털 작품 판매"],
-    href: "/artist/lechointheworld",
-  },
+  ...getArtistProfiles().map<SearchResult>((profile) => ({
+    badges: [profile.membershipLabel],
+    description: profile.bio,
+    href: profile.href,
+    id: `user-${profile.username}`,
+    subtitle: profile.coverTitle,
+    tags: Array.from(
+      new Set(
+        profile.tags
+          .map((tag) => tag.replace("#", "").toLowerCase())
+          .flatMap((tag): SearchFilterTagId[] => {
+            if (tag === "커미션") {
+              return ["commission"];
+            }
+            if (tag === "ebook") {
+              return ["ebook"];
+            }
+            if (tag === "캐릭터") {
+              return ["character"];
+            }
+            if (tag === "멤버십" || tag === "후원") {
+              return ["membership"];
+            }
+            if (tag === "판타지" || tag === "배경") {
+              return ["fantasy"];
+            }
+            return [];
+          }),
+      ),
+    ),
+    title: profile.displayName,
+    type: "user",
+  })),
   ...getCatalogSearchResults(),
+  ...getFeedPosts().map<SearchResult>((post) => ({
+    badges: [post.createdAtLabel],
+    description: post.body,
+    href: post.href,
+    id: `feed-${post.id}`,
+    imageAlt: post.imageAlt,
+    imageSrc: post.imageSrc,
+    subtitle: `@${post.artist.username}`,
+    tags: feedTags(`${post.body} ${post.imageAlt}`),
+    title: post.artist.displayName,
+    type: "feed",
+  })),
 ];
 
 const normalize = (value: string) => value.trim().toLowerCase();

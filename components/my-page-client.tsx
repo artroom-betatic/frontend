@@ -31,7 +31,7 @@ const myMenus = [
   },
   {
     description: "구매한 디지털 작품과 Ebook을 모아봅니다.",
-    href: "/search?tag=ebook",
+    href: "/library",
     icon: "library",
     title: "내 소장함",
   },
@@ -47,13 +47,19 @@ const creatorToolItems = [
     description: "의뢰 슬롯, 가격, 신청 조건을 정리합니다.",
     href: "/creator/commissions",
     icon: "commission",
-    title: "커미션 열기",
+    title: "받은 커미션 관리",
   },
   {
     description: "디지털 작품과 Ebook 판매 페이지를 준비합니다.",
     href: "/creator/artworks/new",
     icon: "artwork",
     title: "작품 등록하기",
+  },
+  {
+    description: "작품 판매, 멤버십, 커미션 수익을 확인합니다.",
+    href: "/creator/dashboard",
+    icon: "payout",
+    title: "수익 대시보드",
   },
   {
     description: "판매 수익을 받을 정산 정보를 관리합니다.",

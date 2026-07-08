@@ -20,7 +20,11 @@ const summary = [
 export default function CommissionsPage() {
   return (
     <AppFrame>
-      <MobileHeader title="커미션 의뢰 현황" backHref="/menu" />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/menu"
+        title="커미션 의뢰 현황"
+      />
       <main className="px-6 pb-8 pt-[14px]">
         <ScreenSection title="커미션 의뢰 현황">
           <UiCard>

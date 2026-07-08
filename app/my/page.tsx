@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function MyPage() {
   return (
     <AppFrame>
-      <MobileHeader title="마이페이지" />
+      <MobileHeader backBehavior="history" backHref="/" title="마이페이지" />
       <MyPageClient />
       <BottomNav />
     </AppFrame>

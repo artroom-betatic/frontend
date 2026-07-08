@@ -18,7 +18,7 @@ function SearchFallback() {
         className="w-full"
         disabled
         kind="search"
-        placeholder="작가, 작품, 커미션 검색"
+        placeholder="유저, 작품, 피드 검색"
       />
       <div className="mt-4 flex gap-[6px]">
         <FigmaTag active>전체</FigmaTag>
@@ -46,7 +46,7 @@ function SearchFallback() {
 export default function SearchPage() {
   return (
     <AppFrame>
-      <MobileHeader title="검색" />
+      <MobileHeader backBehavior="history" backHref="/" title="검색" />
       <Suspense fallback={<SearchFallback />}>
         <SearchClient />
       </Suspense>
