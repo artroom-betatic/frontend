@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ActionButton } from "@/components/action-button";
 import {
   SettingsListItem,
@@ -12,26 +12,31 @@ import {
   clearStoredProfileImage,
   saveStoredProfileImage,
 } from "@/lib/my-profile";
+import {
+  clearRouteToast,
+  readRouteToast,
+  subscribeRouteToastChange,
+} from "@/lib/route-toast";
 import { getCreatorMembershipMenuItem } from "@/lib/creator-membership";
 import { useCreatorMembershipStatus } from "@/lib/use-creator-membership";
 import { useProfileImage } from "@/lib/use-profile-image";
 
 const myStats = [
-  { label: "팔로잉", value: "24" },
+  { label: "가입 멤버십", value: "2" },
   { label: "소장 작품", value: "18" },
-  { label: "커미션", value: "3" },
+  { label: "내 작품", value: "4" },
 ];
 
-const myMenus = [
+const myCollectionItems = [
   {
-    description: "진행 중인 의뢰와 완료된 작업물을 확인합니다.",
-    href: "/commissions",
-    icon: "commission",
-    title: "커미션 의뢰 현황",
+    description: "후원 중인 멤버십과 받을 수 있는 혜택을 확인합니다.",
+    href: "/membership",
+    icon: "membership",
+    title: "가입한 멤버십",
   },
   {
     description: "구매한 디지털 작품과 Ebook을 모아봅니다.",
-    href: "/search?tag=ebook",
+    href: "/library",
     icon: "library",
     title: "내 소장함",
   },
@@ -42,24 +47,12 @@ const myMenus = [
   title: string;
 }[];
 
-const creatorToolItems = [
+const myCreationItems = [
   {
-    description: "의뢰 슬롯, 가격, 신청 조건을 정리합니다.",
-    href: "/creator/commissions",
-    icon: "commission",
-    title: "커미션 열기",
-  },
-  {
-    description: "디지털 작품과 Ebook 판매 페이지를 준비합니다.",
-    href: "/creator/artworks/new",
+    description: "등록한 작품과 판매 준비 중인 초안을 확인합니다.",
+    href: "/creator/artworks",
     icon: "artwork",
-    title: "작품 등록하기",
-  },
-  {
-    description: "판매 수익을 받을 정산 정보를 관리합니다.",
-    href: "/creator/payout",
-    icon: "payout",
-    title: "정산 설정",
+    title: "내 작품",
   },
 ] satisfies {
   description: string;
@@ -72,10 +65,25 @@ export function MyPageClient() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const creatorMembershipStatus = useCreatorMembershipStatus();
   const profileImageSrc = useProfileImage();
+  const toastMessage = useSyncExternalStore(
+    subscribeRouteToastChange,
+    readRouteToast,
+    () => "",
+  );
   const [statusMessage, setStatusMessage] = useState("");
-  const creatorTools = [
-    getCreatorMembershipMenuItem(creatorMembershipStatus),
-    ...creatorToolItems,
+  const creatorMembershipItem = getCreatorMembershipMenuItem(
+    creatorMembershipStatus,
+  );
+  const myCreations = [
+    myCreationItems[0],
+    {
+      ...creatorMembershipItem,
+      description: creatorMembershipItem.description,
+      title:
+        creatorMembershipStatus === "active"
+          ? "만든 멤버십"
+          : "멤버십 만들기",
+    },
   ];
 
   const handleImageFile = (file: File | undefined) => {
@@ -105,6 +113,16 @@ export function MyPageClient() {
       fileInputRef.current.value = "";
     }
   };
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(clearRouteToast, 2000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [toastMessage]);
 
   return (
     <main className="px-6 pb-[96px] pt-5">
@@ -163,9 +181,9 @@ export function MyPageClient() {
       </div>
 
       <section className="mt-7">
-        <h2 className="text-base font-semibold">창작자 도구</h2>
+        <h2 className="text-base font-semibold">내 보관함</h2>
         <div className="mt-4 grid gap-2">
-          {creatorTools.map((item) => (
+          {myCollectionItems.map((item) => (
             <SettingsListItem
               description={item.description}
               href={item.href}
@@ -178,9 +196,9 @@ export function MyPageClient() {
       </section>
 
       <section className="mt-7">
-        <h2 className="text-base font-semibold">내 활동</h2>
+        <h2 className="text-base font-semibold">내 창작물</h2>
         <div className="mt-4 grid gap-2">
-          {myMenus.map((item) => (
+          {myCreations.map((item) => (
             <SettingsListItem
               description={item.description}
               href={item.href}
@@ -191,6 +209,18 @@ export function MyPageClient() {
           ))}
         </div>
       </section>
+
+      {toastMessage ? (
+        <div
+          aria-live="polite"
+          className="fixed left-1/2 top-1/2 z-40 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 px-6"
+          role="status"
+        >
+          <div className="rounded-md bg-foreground/65 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg backdrop-blur-sm">
+            {toastMessage}
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

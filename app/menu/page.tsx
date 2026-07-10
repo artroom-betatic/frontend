@@ -11,11 +11,10 @@ export const metadata: Metadata = {
 export default function MenuPage() {
   return (
     <AppFrame>
-      <MobileHeader title="전체메뉴" />
+      <MobileHeader backBehavior="history" backHref="/" title="전체메뉴" />
       <main className="px-6 pb-[96px] pt-5">
         <p className="text-xs leading-5 text-[#929aa8]">
-          작가 후원, 작품 구매, 커미션 의뢰, 정산 관리가 한 곳에서 이어지는
-          창작자 플랫폼입니다.
+          커미션, 정산, 수익, 앱 설정처럼 관리가 필요한 기능을 모아둡니다.
         </p>
         <MenuClient />
       </main>

@@ -8,7 +8,8 @@ export type SettingsListItemIconName =
   | "library"
   | "membership"
   | "payout"
-  | "policy";
+  | "policy"
+  | "settings";
 
 type SettingsListItemProps = {
   description: string;
@@ -17,7 +18,7 @@ type SettingsListItemProps = {
   title: string;
 };
 
-function SettingsListIcon({ name }: { name: SettingsListItemIconName }) {
+export function SettingsListIcon({ name }: { name: SettingsListItemIconName }) {
   const iconClassName = "h-7 w-7 text-primary";
 
   if (name === "bell") {
@@ -116,6 +117,24 @@ function SettingsListIcon({ name }: { name: SettingsListItemIconName }) {
       >
         <path d="M9 7h18v22l-9-4.5L9 29V7Z" fill="currentColor" />
         <path d="M13 12h10M13 17h8" stroke="white" strokeLinecap="round" strokeWidth="2.5" />
+      </svg>
+    );
+  }
+
+  if (name === "settings") {
+    return (
+      <svg
+        aria-hidden="true"
+        className={iconClassName}
+        fill="none"
+        viewBox="0 0 36 36"
+      >
+        <path
+          d="M18 8.5 20.1 12l4.1.2 1.8 3.2-2 3.6 2 3.6-1.8 3.2-4.1.2L18 29.5 15.9 26l-4.1-.2-1.8-3.2 2-3.6-2-3.6 1.8-3.2 4.1-.2L18 8.5Z"
+          fill="currentColor"
+          opacity="0.3"
+        />
+        <circle cx="18" cy="19" fill="currentColor" r="5" />
       </svg>
     );
   }

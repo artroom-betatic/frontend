@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 const policyCards = [
   {
+    id: "fees",
     title: "작품 판매 수수료",
     subtitle: "Artroom의 수수료 정책",
     label: "거래액의",
@@ -41,29 +42,42 @@ const policyCards = [
     description: "계좌이체로만 지원됩니다. 마이페이지 > 정산 설정에서 계좌를 등록하세요.",
   },
   {
+    id: "refunds",
     title: "환불 및 취소 정책",
     description:
       "구매자의 환불 신청 시 플랫폼이 환불액을 처리하며, 이미 지급된 정산금 중 해당 부분은 다음 정산에서 차감됩니다.",
+  },
+  {
+    id: "content",
+    title: "콘텐츠 정책",
+    description:
+      "저작권을 침해하거나 플랫폼 운영 기준에 맞지 않는 콘텐츠는 판매, 멤버십, 커미션 등록이 제한될 수 있습니다.",
   },
 ];
 
 export default function PoliciesPage() {
   return (
     <AppFrame>
-      <MobileHeader title="수수료/정산 정책 안내" backHref="/menu" />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/menu"
+        title="수수료/정산 정책 안내"
+      />
       <main className="grid gap-5 px-6 pb-8 pt-2">
         {policyCards.map((card) => (
-          <UiCard className="grid gap-3" key={card.title}>
-            <h2 className="text-base font-semibold">{card.title}</h2>
-            {card.subtitle ? <p className="text-xs">{card.subtitle}</p> : null}
-            {card.value ? (
-              <div className="flex items-center justify-between">
-                <p className="text-xs">{card.label}</p>
-                <p className="text-xl font-bold">{card.value}</p>
-              </div>
-            ) : null}
-            <p className="text-[11px] leading-[18px]">{card.description}</p>
-          </UiCard>
+          <div className="scroll-mt-16" id={card.id} key={card.title}>
+            <UiCard className="grid gap-3">
+              <h2 className="text-base font-semibold">{card.title}</h2>
+              {card.subtitle ? <p className="text-xs">{card.subtitle}</p> : null}
+              {card.value ? (
+                <div className="flex items-center justify-between">
+                  <p className="text-xs">{card.label}</p>
+                  <p className="text-xl font-bold">{card.value}</p>
+                </div>
+              ) : null}
+              <p className="text-[11px] leading-[18px]">{card.description}</p>
+            </UiCard>
+          </div>
         ))}
 
         <UiCard className="grid gap-3">

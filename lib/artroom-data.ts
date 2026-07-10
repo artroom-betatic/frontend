@@ -141,21 +141,3 @@ export const notificationGroups: NotificationGroup[] = [
     ],
   },
 ];
-
-export const menuItems = [
-  {
-    href: "/commissions",
-    title: "커미션 의뢰 현황",
-    description: "요청, 진행 중, 완료된 커미션을 한 번에 확인",
-  },
-  {
-    href: "/policies",
-    title: "수수료/정산 정책",
-    description: "작품 판매와 커미션 거래 정산 기준",
-  },
-  {
-    href: "/notifications",
-    title: "알림 설정",
-    description: "팔로우, 구매, 멤버십, 커미션 알림 관리",
-  },
-];

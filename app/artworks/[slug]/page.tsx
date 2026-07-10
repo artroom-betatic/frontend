@@ -40,7 +40,11 @@ export default async function ArtworkPage({ params }: ArtworkPageProps) {
 
   return (
     <AppFrame>
-      <MobileHeader backHref="/search?tag=ebook" title="작품 상세" />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/search?type=artwork"
+        title="작품 상세"
+      />
       <main className="pb-[96px]">
         <section className="bg-white px-6 pb-6 pt-5">
           <div className="relative aspect-square overflow-hidden rounded-[6px] bg-[#f9fafb]">
@@ -96,15 +100,17 @@ export default async function ArtworkPage({ params }: ArtworkPageProps) {
           </div>
         </section>
 
-        <ScreenSection title="작품 구성">
-          <div className="grid gap-3 px-6">
-            {artwork.includes.map((item) => (
-              <UiCard className="bg-white" key={item}>
-                <p className="text-sm font-semibold">{item}</p>
-              </UiCard>
-            ))}
-          </div>
-        </ScreenSection>
+        <div className="px-6">
+          <ScreenSection title="작품 구성">
+            <div className="grid gap-3">
+              {artwork.includes.map((item) => (
+                <UiCard className="bg-white" key={item}>
+                  <p className="text-sm font-semibold">{item}</p>
+                </UiCard>
+              ))}
+            </div>
+          </ScreenSection>
+        </div>
       </main>
       <BottomNav />
     </AppFrame>

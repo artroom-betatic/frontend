@@ -11,7 +11,11 @@ export const metadata: Metadata = {
 export default function NotificationsPage() {
   return (
     <AppFrame>
-      <MobileHeader title="알림 설정" backHref="/menu" />
+      <MobileHeader
+        backBehavior="history"
+        backHref="/menu"
+        title="알림 설정"
+      />
       <main className="px-6 pb-8 pt-[14px]">
         <NotificationSettingsClient groups={notificationGroups} />
       </main>

@@ -8,14 +8,21 @@ import type {
 
 const avatarSrc = "/figma/profile.png";
 const postImageSrc = "/figma/home-post.png";
+const animeDialogueImageSrc = "/figma/post-anime-dialogue.png";
+const hamsterMonoImageSrc = "/figma/post-hamster-mono.png";
+const hamsterRedImageSrc = "/figma/post-hamster-red.png";
 
 const artistHref = (username: string) => `/artist/${encodeURIComponent(username)}`;
 const feedHref = (id: string) => `/feed/${encodeURIComponent(id)}`;
-const createImageSlides = (imageAlt: string) => [
-  { imageAlt, imageSrc: postImageSrc, label: "완성본" },
+const createImageSlides = (
+  imageAlt: string,
+  imageSrc: string,
+  processImageSrc = hamsterMonoImageSrc,
+) => [
+  { imageAlt, imageSrc, label: "완성본" },
   {
     imageAlt: `${imageAlt} 작업 과정`,
-    imageSrc: postImageSrc,
+    imageSrc: processImageSrc,
     label: "작업 과정",
   },
 ];
@@ -128,7 +135,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-001"),
     id: "feed-001",
     imageAlt: "작가의 판타지 일러스트 게시물",
-    imageSrc: postImageSrc,
+    imageSrc: hamsterMonoImageSrc,
     likedBy: "user_123님 외 546명이 좋아합니다",
     likes: 547,
   },
@@ -140,7 +147,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-002"),
     id: "feed-002",
     imageAlt: "따뜻한 색감의 인스타툰 일러스트",
-    imageSrc: postImageSrc,
+    imageSrc: animeDialogueImageSrc,
     likedBy: "inme__diary님 외 312명이 좋아합니다",
     likes: 313,
   },
@@ -152,7 +159,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-003"),
     id: "feed-003",
     imageAlt: "캐릭터 프로필 커미션 샘플",
-    imageSrc: postImageSrc,
+    imageSrc: hamsterRedImageSrc,
     likedBy: "naronaro.i님 외 221명이 좋아합니다",
     likes: 222,
   },
@@ -164,7 +171,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-004"),
     id: "feed-004",
     imageAlt: "디지털 작품 Ebook 미리보기",
-    imageSrc: postImageSrc,
+    imageSrc: hamsterMonoImageSrc,
     likedBy: "blue_studio님 외 476명이 좋아합니다",
     likes: 477,
   },
@@ -176,7 +183,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-005"),
     id: "feed-005",
     imageAlt: "빠른 러프 드로잉 게시물",
-    imageSrc: postImageSrc,
+    imageSrc: animeDialogueImageSrc,
     likedBy: "user_123님 외 164명이 좋아합니다",
     likes: 165,
   },
@@ -200,7 +207,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-007"),
     id: "feed-007",
     imageAlt: "컬러 튜토리얼 예고 이미지",
-    imageSrc: postImageSrc,
+    imageSrc: hamsterRedImageSrc,
     likedBy: "nori_n_sullgi님 외 295명이 좋아합니다",
     likes: 296,
   },
@@ -212,7 +219,7 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-008"),
     id: "feed-008",
     imageAlt: "굿즈 제작용 캐릭터 일러스트",
-    imageSrc: postImageSrc,
+    imageSrc: hamsterRedImageSrc,
     likedBy: "naronaro.i님 외 188명이 좋아합니다",
     likes: 189,
   },
@@ -224,13 +231,13 @@ const feedPosts: FeedPost[] = [
     href: feedHref("feed-009"),
     id: "feed-009",
     imageAlt: "단편 만화 콘티 미리보기",
-    imageSrc: postImageSrc,
+    imageSrc: animeDialogueImageSrc,
     likedBy: "blue_studio님 외 254명이 좋아합니다",
     likes: 255,
   },
 ].map((post) => ({
   ...post,
-  imageSlides: createImageSlides(post.imageAlt),
+  imageSlides: createImageSlides(post.imageAlt, post.imageSrc),
 }));
 
 export function getFeedPage({
@@ -254,10 +261,24 @@ export function getArtistProfile(username: string) {
   return artistByUsername.get(username);
 }
 
-export function getArtistPosts(username: string, limit = 6) {
-  return feedPosts.filter((post) => post.artist.username === username).slice(0, limit);
+export function getArtistProfiles() {
+  return artists;
+}
+
+export function getArtistPosts(username: string, limit?: number) {
+  const artistPosts = feedPosts.filter((post) => post.artist.username === username);
+
+  if (typeof limit !== "number") {
+    return artistPosts;
+  }
+
+  return artistPosts.slice(0, Math.max(0, limit));
 }
 
 export function getFeedPost(id: string) {
   return feedPosts.find((post) => post.id === id);
+}
+
+export function getFeedPosts() {
+  return feedPosts;
 }

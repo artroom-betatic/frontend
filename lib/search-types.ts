@@ -13,7 +13,7 @@ export type SearchTag = {
   label: string;
 };
 
-export type SearchResultType = "artist" | "artwork" | "commission";
+export type SearchResultType = "artwork" | "feed" | "user";
 
 export type SearchResult = {
   id: string;
@@ -24,6 +24,8 @@ export type SearchResult = {
   tags: SearchFilterTagId[];
   badges: string[];
   href: string;
+  imageAlt?: string;
+  imageSrc?: string;
 };
 
 export type SearchRequest = {
