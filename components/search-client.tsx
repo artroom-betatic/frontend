@@ -66,7 +66,19 @@ function SearchResultCard({ result }: { result: SearchResult }) {
     <Link aria-label={`${result.title} ${destinationLabel}`} href={result.href}>
       <UiCard>
         <div className="flex items-start gap-3">
-          <ProfileAvatar size={44} />
+          {result.imageSrc ? (
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[6px] bg-panel">
+              <Image
+                alt={result.imageAlt ?? `${result.title} 이미지`}
+                className="object-cover"
+                fill
+                sizes="56px"
+                src={result.imageSrc}
+              />
+            </div>
+          ) : (
+            <ProfileAvatar size={44} />
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="min-w-0 truncate text-sm font-semibold">

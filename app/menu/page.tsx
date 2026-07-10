@@ -14,8 +14,7 @@ export default function MenuPage() {
       <MobileHeader backBehavior="history" backHref="/" title="전체메뉴" />
       <main className="px-6 pb-[96px] pt-5">
         <p className="text-xs leading-5 text-[#929aa8]">
-          감상, 구매, 후원, 커미션, 정산까지 Artroom의 주요 흐름을 한 곳에서
-          시작합니다.
+          커미션, 정산, 수익, 앱 설정처럼 관리가 필요한 기능을 모아둡니다.
         </p>
         <MenuClient />
       </main>

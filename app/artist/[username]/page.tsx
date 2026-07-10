@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -6,6 +5,7 @@ import { AppFrame } from "@/components/app-frame";
 import { ArtistFeedCard } from "@/components/artist-feed-card";
 import { ArtistActions } from "@/components/artist-actions";
 import { BottomNav } from "@/components/bottom-nav";
+import { ContentListCard } from "@/components/content-list-card";
 import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -55,11 +55,6 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
     profile.username,
   )}`;
   const profileEntrypoints = [
-    ...profileSeries.slice(0, 1).map(() => ({
-      description: `운영 중인 시리즈 ${profileSeries.length}개`,
-      href: "#profile-series",
-      title: "시리즈 보기",
-    })),
     ...profileArtworks.slice(0, 1).map(() => ({
       description: `등록된 작품 ${profileArtworks.length}개`,
       href: "#profile-artworks",
@@ -164,34 +159,16 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             </div>
             <div className="mt-4 grid gap-3">
               {profileArtworks.map((artwork) => (
-                <Link
-                  className="block rounded-[6px] border border-[#e5e7eb] bg-white p-3"
+                <ContentListCard
+                  description={artwork.description}
                   href={artwork.href}
+                  imageAlt={artwork.imageAlt}
+                  imageSrc={artwork.imageSrc}
                   key={artwork.slug}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[6px] bg-[#f9fafb]">
-                      <Image
-                        alt={artwork.imageAlt}
-                        className="object-cover"
-                        fill
-                        sizes="80px"
-                        src={artwork.imageSrc}
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-black">
-                        {artwork.title}
-                      </p>
-                      <p className="mt-1 text-xs font-semibold text-[#307cff]">
-                        {artwork.priceLabel}
-                      </p>
-                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#1f2937]">
-                        {artwork.description}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
+                  subtitle={artwork.priceLabel}
+                  subtitleTone="primary"
+                  title={artwork.title}
+                />
               ))}
             </div>
           </section>
