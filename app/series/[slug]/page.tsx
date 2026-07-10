@@ -4,10 +4,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppFrame } from "@/components/app-frame";
 import { BottomNav } from "@/components/bottom-nav";
+import { ContentListCard } from "@/components/content-list-card";
 import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ScreenSection } from "@/components/screen-section";
-import { UiCard } from "@/components/ui-card";
 import {
   getSeriesDetail,
   getSeriesSlugs,
@@ -91,21 +91,16 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           <ScreenSection title="회차">
             <div className="grid gap-3">
               {series.episodes.map((episode) => (
-                <UiCard className="bg-white" key={episode.title}>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-black">
-                        {episode.title}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-[#929aa8]">
-                        {episode.publishedAtLabel}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-md bg-[#f9fafb] px-3 py-2 text-xs font-semibold text-[#307cff]">
-                      {episode.statusLabel}
-                    </span>
-                  </div>
-                </UiCard>
+                <ContentListCard
+                  ariaLabel={`${episode.title} 보기`}
+                  badge={episode.statusLabel}
+                  href={`/series/${series.slug}/episodes/${episode.slug}`}
+                  imageAlt={episode.imageAlt}
+                  imageSrc={episode.imageSrc}
+                  key={episode.title}
+                  subtitle={episode.publishedAtLabel}
+                  title={episode.title}
+                />
               ))}
             </div>
           </ScreenSection>
