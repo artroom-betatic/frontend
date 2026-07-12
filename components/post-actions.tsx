@@ -1,31 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
+import {
+  defaultUserActionSnapshot,
+  getFeedPostLikeCount,
+  getFeedPostCommentCount,
+  isFeedPostBookmarked,
+  isFeedPostLiked,
+  readUserActionSnapshot,
+  subscribeUserActionsChange,
+  toggleFeedPostBookmark,
+  toggleFeedPostLike,
+} from "@/lib/user-actions";
 import { PostActionIcon } from "./figma-controls";
 
 type PostActionsProps = {
   comments: number;
   commentsAnchorId?: string;
   initialLikes: number;
+  postId: string;
 };
 
 export function PostActions({
   comments,
   commentsAnchorId,
   initialLikes,
+  postId,
 }: PostActionsProps) {
-  const [bookmarked, setBookmarked] = useState(false);
-  const [reaction, setReaction] = useState({
-    liked: false,
-    likes: initialLikes,
-  });
-
-  const toggleLike = () => {
-    setReaction((current) => ({
-      liked: !current.liked,
-      likes: Math.max(0, current.likes + (current.liked ? -1 : 1)),
-    }));
-  };
+  const actionSnapshot = useSyncExternalStore(
+    subscribeUserActionsChange,
+    readUserActionSnapshot,
+    () => defaultUserActionSnapshot,
+  );
+  const bookmarked = isFeedPostBookmarked(actionSnapshot, postId);
+  const liked = isFeedPostLiked(actionSnapshot, postId);
+  const likeCount = getFeedPostLikeCount(actionSnapshot, postId, initialLikes);
+  const commentCount = getFeedPostCommentCount(actionSnapshot, postId, comments);
 
   const showComments = () => {
     if (!commentsAnchorId) {
@@ -42,13 +52,13 @@ export function PostActions({
     <div className="flex h-10 items-center">
       <div className="flex items-center gap-1">
         <PostActionIcon
-          active={reaction.liked}
-          aria-label={reaction.liked ? "좋아요 취소" : "좋아요"}
-          aria-pressed={reaction.liked}
+          active={liked}
+          aria-label={liked ? "좋아요 취소" : "좋아요"}
+          aria-pressed={liked}
           kind="heart"
-          onClick={toggleLike}
+          onClick={() => toggleFeedPostLike(postId)}
         />
-        <span className="text-xs font-bold text-black">{reaction.likes}</span>
+        <span className="text-xs font-bold text-black">{likeCount}</span>
       </div>
       <div className="ml-[25px] flex items-center gap-1">
         <PostActionIcon
@@ -56,7 +66,7 @@ export function PostActions({
           kind="message"
           onClick={showComments}
         />
-        <span className="text-xs font-bold text-black">{comments}</span>
+        <span className="text-xs font-bold text-black">{commentCount}</span>
       </div>
       <PostActionIcon
         active={bookmarked}
@@ -64,7 +74,7 @@ export function PostActions({
         aria-pressed={bookmarked}
         className="ml-auto"
         kind="bookmark"
-        onClick={() => setBookmarked((current) => !current)}
+        onClick={() => toggleFeedPostBookmark(postId)}
       />
     </div>
   );

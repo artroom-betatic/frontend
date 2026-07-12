@@ -8,7 +8,7 @@ type UiCardProps = {
 export function UiCard({ children, className = "" }: UiCardProps) {
   return (
     <section
-      className={`rounded-[6px] border border-[#e5e7eb] bg-[#f9fafb] p-[13px] text-[#1f2937] ${className}`}
+      className={`rounded-[6px] border border-line bg-panel p-[13px] text-foreground ${className}`}
     >
       {children}
     </section>

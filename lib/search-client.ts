@@ -23,6 +23,9 @@ export async function fetchSearchResults(
   if (request.limit) {
     params.set("limit", String(request.limit));
   }
+  if (request.contentDisplay && request.contentDisplay !== "balanced") {
+    params.set("contentDisplay", request.contentDisplay);
+  }
 
   const response = await fetch(`${searchEndpoint}?${params.toString()}`, {
     headers: { accept: "application/json" },

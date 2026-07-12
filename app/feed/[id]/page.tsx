@@ -3,12 +3,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppFrame } from "@/components/app-frame";
-import { AssetIcon } from "@/components/asset-icon";
 import { BottomNav } from "@/components/bottom-nav";
+import { FeedCommentsSection } from "@/components/feed-comments-section";
 import { MobileHeader } from "@/components/mobile-header";
 import { PostActions } from "@/components/post-actions";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { UiCard } from "@/components/ui-card";
 import { comments } from "@/lib/artroom-data";
 import { getFeedPostResource } from "@/lib/server-data";
 
@@ -70,9 +69,10 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               comments={post.comments}
               commentsAnchorId="feed-comments"
               initialLikes={post.likes}
+              postId={post.id}
             />
 
-            <p className="mt-[5px] flex items-center text-[10px] leading-3 text-black">
+            <p className="mt-[5px] flex items-center text-xs leading-4 text-black">
               <span className="relative mr-2 flex w-[29px] shrink-0">
                 <ProfileAvatar className="border border-white" size={22} />
                 <ProfileAvatar className="-ml-[15px] border border-white" size={22} />
@@ -89,37 +89,11 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
           </div>
         </article>
 
-        <section className="mt-2 bg-white px-4 py-5" id="feed-comments">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-black">댓글</h2>
-            <span className="text-xs font-medium text-[#929aa8]">
-              {post.comments}개
-            </span>
-          </div>
-          <div className="mt-4 grid gap-3">
-            {comments.slice(0, 4).map((comment) => (
-              <UiCard className="bg-white" key={`${comment.author}-${comment.body}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 gap-2">
-                    <ProfileAvatar size={32} />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-black">
-                        {comment.author}
-                        <span className="ml-1 font-normal text-[#929aa8]">
-                          {comment.time}
-                        </span>
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-black">
-                        {comment.body}
-                      </p>
-                    </div>
-                  </div>
-                  <AssetIcon className="h-4 w-4 shrink-0 opacity-30" name="heart-small" />
-                </div>
-              </UiCard>
-            ))}
-          </div>
-        </section>
+        <FeedCommentsSection
+          baseComments={comments.slice(0, 4)}
+          initialCommentCount={post.comments}
+          postId={post.id}
+        />
       </main>
       <BottomNav />
     </AppFrame>

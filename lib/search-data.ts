@@ -1,4 +1,5 @@
 import { getCatalogSearchResults } from "./catalog-data";
+import { sortSearchResultsByContentDisplay } from "./app-settings";
 import { getArtistProfiles, getFeedPosts } from "./feed-data";
 import { searchTags } from "./search-tags";
 import type {
@@ -93,6 +94,7 @@ function normalizeFilterTags({ tag, tags = [] }: SearchRequest) {
 }
 
 export function searchArtroomCatalog({
+  contentDisplay = "balanced",
   limit = 12,
   query = "",
   tag = "all",
@@ -102,7 +104,7 @@ export function searchArtroomCatalog({
   const safeLimit = Math.max(1, Math.min(limit, 30));
   const selectedTags = normalizeFilterTags({ tag, tags });
 
-  const results = searchResults
+  const filteredResults = searchResults
     .filter(
       (item) =>
         selectedTags.length === 0 ||
@@ -113,12 +115,21 @@ export function searchArtroomCatalog({
         return true;
       }
 
-      return [item.title, item.subtitle, item.description, ...item.tags, ...item.badges]
+      return [
+        item.title,
+        item.subtitle,
+        item.description,
+        ...item.tags,
+        ...item.badges,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery);
-    })
-    .slice(0, safeLimit);
+    });
+  const results = sortSearchResultsByContentDisplay(
+    filteredResults,
+    contentDisplay,
+  ).slice(0, safeLimit);
 
   return {
     query,

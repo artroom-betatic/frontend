@@ -1,3 +1,5 @@
+import type { ContentDisplayMode } from "./app-settings";
+
 export type SearchTagId =
   | "all"
   | "fantasy"
@@ -13,7 +15,7 @@ export type SearchTag = {
   label: string;
 };
 
-export type SearchResultType = "artwork" | "feed" | "user";
+export type SearchResultType = "artwork" | "commission" | "feed" | "user";
 
 export type SearchResult = {
   id: string;
@@ -29,6 +31,7 @@ export type SearchResult = {
 };
 
 export type SearchRequest = {
+  contentDisplay?: ContentDisplayMode;
   limit?: number;
   query?: string;
   tag?: SearchTagId;

@@ -1,4 +1,5 @@
 import { searchArtroomCatalog } from "@/lib/search-data";
+import { normalizeContentDisplayMode } from "@/lib/app-settings";
 import type { SearchFilterTagId, SearchTagId } from "@/lib/search-types";
 
 const tagIds: SearchTagId[] = [
@@ -35,6 +36,9 @@ export async function GET(request: Request) {
 
   return Response.json(
     searchArtroomCatalog({
+      contentDisplay: normalizeContentDisplayMode(
+        searchParams.get("contentDisplay"),
+      ),
       limit: Number.isFinite(limit) ? limit : 12,
       query: searchParams.get("q") ?? "",
       tags: parseTags(searchParams),

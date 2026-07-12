@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { ActionButton } from "@/components/action-button";
 import { ScreenSection } from "@/components/screen-section";
 import { Toggle } from "@/components/toggle";
 import { UiCard } from "@/components/ui-card";
 import type { NotificationGroup } from "@/lib/artroom-data";
+import {
+  readStoredNotificationGroups,
+  saveStoredNotificationGroups,
+  subscribeNotificationSettingsChange,
+} from "@/lib/notification-settings";
 
 type NotificationSettingsClientProps = {
   groups: NotificationGroup[];
@@ -14,7 +19,15 @@ type NotificationSettingsClientProps = {
 export function NotificationSettingsClient({
   groups: initialGroups,
 }: NotificationSettingsClientProps) {
-  const [groups, setGroups] = useState(initialGroups);
+  const savedGroups = useSyncExternalStore(
+    subscribeNotificationSettingsChange,
+    () => readStoredNotificationGroups(initialGroups),
+    () => initialGroups,
+  );
+  const [draftGroups, setDraftGroups] = useState<NotificationGroup[] | null>(
+    null,
+  );
+  const groups = draftGroups ?? savedGroups;
   const [statusMessage, setStatusMessage] = useState("");
   const allEnabled = groups.every((group) =>
     group.items.every((item) => item.enabled),
@@ -22,8 +35,8 @@ export function NotificationSettingsClient({
 
   const toggleAll = () => {
     const nextEnabled = !allEnabled;
-    setGroups((currentGroups) =>
-      currentGroups.map((group) => ({
+    setDraftGroups(
+      groups.map((group) => ({
         ...group,
         items: group.items.map((item) => ({ ...item, enabled: nextEnabled })),
       })),
@@ -32,8 +45,8 @@ export function NotificationSettingsClient({
   };
 
   const toggleItem = (groupLabel: string, itemTitle: string) => {
-    setGroups((currentGroups) =>
-      currentGroups.map((group) =>
+    setDraftGroups(
+      groups.map((group) =>
         group.label === groupLabel
           ? {
               ...group,
@@ -91,7 +104,13 @@ export function NotificationSettingsClient({
       ))}
 
       <div className="mt-9 flex justify-end">
-        <ActionButton onClick={() => setStatusMessage("변경사항을 저장했습니다.")}>
+        <ActionButton
+          onClick={() => {
+            saveStoredNotificationGroups(groups);
+            setDraftGroups(null);
+            setStatusMessage("변경사항을 저장했습니다.");
+          }}
+        >
           변경사항 저장
         </ActionButton>
       </div>

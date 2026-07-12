@@ -5,6 +5,7 @@ import type {
   FeedPageResponse,
   FeedPost,
 } from "./feed-types";
+import { sortFeedPostsByContentDisplay } from "./app-settings";
 
 const avatarSrc = "/figma/profile.png";
 const postImageSrc = "/figma/home-post.png";
@@ -33,7 +34,7 @@ const artists: ArtistProfile[] = [
     bio: "감정선이 살아있는 캐릭터 일러스트와 판타지 세계관 작업을 올립니다.",
     coverTitle: "판타지 일러스트 / 멤버십 운영",
     displayName: "작가의 이름",
-    followersLabel: "팔로워 12.4K",
+    followersLabel: "팔로워 1.2만",
     href: artistHref("user_123"),
     isFollowing: true,
     membershipLabel: "프리미엄 멤버십",
@@ -46,7 +47,7 @@ const artists: ArtistProfile[] = [
     bio: "일상툰과 따뜻한 색감의 창작 캐릭터를 연재합니다.",
     coverTitle: "인스타툰 / 창작 캐릭터",
     displayName: "nori_n_sullgi",
-    followersLabel: "팔로워 8.7K",
+    followersLabel: "팔로워 0.9만",
     href: artistHref("nori_n_sullgi"),
     isFollowing: true,
     membershipLabel: "월간 후원",
@@ -59,7 +60,7 @@ const artists: ArtistProfile[] = [
     bio: "SNS 프로필, 굿즈, SD 캐릭터 커미션을 중심으로 작업합니다.",
     coverTitle: "커미션 가능 / 굿즈 제작",
     displayName: "inme__diary",
-    followersLabel: "팔로워 5.1K",
+    followersLabel: "팔로워 0.5만",
     href: artistHref("inme__diary"),
     isFollowing: false,
     membershipLabel: "커미션 슬롯 오픈",
@@ -72,7 +73,7 @@ const artists: ArtistProfile[] = [
     bio: "단편 만화와 설정집 Ebook을 판매하는 작가입니다.",
     coverTitle: "Ebook / 단편 만화",
     displayName: "lechointheworld",
-    followersLabel: "팔로워 10.2K",
+    followersLabel: "팔로워 1만",
     href: artistHref("lechointheworld"),
     isFollowing: false,
     membershipLabel: "디지털 작품 판매",
@@ -85,7 +86,7 @@ const artists: ArtistProfile[] = [
     bio: "러프 스케치와 빠른 아이디어 드로잉을 자주 공유합니다.",
     coverTitle: "러프 스케치 / 드로잉",
     displayName: "naronaro.i",
-    followersLabel: "팔로워 3.8K",
+    followersLabel: "팔로워 0.4만",
     href: artistHref("naronaro.i"),
     isFollowing: true,
     membershipLabel: "스케치 멤버십",
@@ -98,7 +99,7 @@ const artists: ArtistProfile[] = [
     bio: "푸른 색감과 배경 일러스트를 중심으로 작업하는 스튜디오입니다.",
     coverTitle: "배경 일러스트 / 판타지",
     displayName: "blue_studio",
-    followersLabel: "팔로워 6.6K",
+    followersLabel: "팔로워 0.7만",
     href: artistHref("blue_studio"),
     isFollowing: false,
     membershipLabel: "배경 커미션",
@@ -241,14 +242,16 @@ const feedPosts: FeedPost[] = [
 }));
 
 export function getFeedPage({
+  contentDisplay = "balanced",
   cursor = "0",
   limit = 3,
 }: FeedPageRequest): FeedPageResponse {
   const start = Math.max(0, Number.parseInt(cursor, 10) || 0);
   const safeLimit = Math.max(1, Math.min(limit, 10));
-  const items = feedPosts.slice(start, start + safeLimit);
+  const sortedPosts = sortFeedPostsByContentDisplay(feedPosts, contentDisplay);
+  const items = sortedPosts.slice(start, start + safeLimit);
   const nextIndex = start + items.length;
-  const hasMore = nextIndex < feedPosts.length;
+  const hasMore = nextIndex < sortedPosts.length;
 
   return {
     hasMore,

@@ -6,6 +6,7 @@ import { ArtistFeedCard } from "@/components/artist-feed-card";
 import { ArtistActions } from "@/components/artist-actions";
 import { BottomNav } from "@/components/bottom-nav";
 import { ContentListCard } from "@/components/content-list-card";
+import { CreatorCommissionPublicCard } from "@/components/creator-commission-public-card";
 import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -217,6 +218,11 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             </div>
           </section>
         ) : null}
+
+        <CreatorCommissionPublicCard
+          hasStaticCommissions={profileCommissions.length > 0}
+          username={profile.username}
+        />
 
         <section className="mt-2 bg-white px-6 py-5" id="profile-feed">
           <div className="flex items-center justify-between">

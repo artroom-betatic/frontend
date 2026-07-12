@@ -3,8 +3,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { comments } from "@/lib/artroom-data";
+import {
+  contentDisplayOptions,
+  defaultAppSettings,
+  readAppSettings,
+  sortFeedPostsByContentDisplay,
+  subscribeAppSettingsChange,
+} from "@/lib/app-settings";
 import { fetchFeedPage } from "@/lib/feed-client";
 import type { FeedPost } from "@/lib/feed-types";
 import { ActionButton } from "./action-button";
@@ -13,6 +27,21 @@ import { BottomNav } from "./bottom-nav";
 import { PostActionIcon } from "./figma-controls";
 import { ProfileAvatar } from "./profile-avatar";
 import { UiCard } from "./ui-card";
+import {
+  addFeedComment,
+  defaultUserActionSnapshot,
+  getArtistFollowing,
+  getFeedPostCommentCount,
+  getFeedPostLikeCount,
+  getStoredFeedComments,
+  isFeedPostBookmarked,
+  isFeedPostLiked,
+  readUserActionSnapshot,
+  setArtistFollowing,
+  subscribeUserActionsChange,
+  toggleFeedPostBookmark,
+  toggleFeedPostLike,
+} from "@/lib/user-actions";
 
 const FEED_PAGE_SIZE = 3;
 
@@ -54,9 +83,23 @@ function CommentRow({
   );
 }
 
-function CommentsSheet({ onClose }: { onClose: () => void }) {
-  const [commentRows, setCommentRows] = useState(comments);
+function CommentsSheet({
+  onClose,
+  post,
+}: {
+  onClose: () => void;
+  post: FeedPost;
+}) {
+  const actionSnapshot = useSyncExternalStore(
+    subscribeUserActionsChange,
+    readUserActionSnapshot,
+    () => defaultUserActionSnapshot,
+  );
   const [draftComment, setDraftComment] = useState("");
+  const commentRows = [
+    ...getStoredFeedComments(actionSnapshot, post.id),
+    ...comments,
+  ];
 
   const submitComment = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,10 +110,7 @@ function CommentsSheet({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    setCommentRows((currentRows) => [
-      { author: "user_123", body, time: "방금" },
-      ...currentRows,
-    ]);
+    addFeedComment(post.id, body);
     setDraftComment("");
   };
 
@@ -89,7 +129,9 @@ function CommentsSheet({ onClose }: { onClose: () => void }) {
           {commentRows.map((comment, index) => (
             <CommentRow
               {...comment}
-              key={`${comment.author}-${comment.body}-${index}`}
+              key={`${comment.author}-${
+                "id" in comment ? comment.id : comment.body
+              }-${index}`}
               onReply={(author) => setDraftComment(`@${author} `)}
             />
           ))}
@@ -147,27 +189,32 @@ function FeedPostArticle({
   onOpenComments: () => void;
   post: FeedPost;
 }) {
+  const actionSnapshot = useSyncExternalStore(
+    subscribeUserActionsChange,
+    readUserActionSnapshot,
+    () => defaultUserActionSnapshot,
+  );
   const fallbackSlide = {
     imageAlt: post.imageAlt,
     imageSrc: post.imageSrc,
     label: "완성본",
   };
   const slides = post.imageSlides?.length ? post.imageSlides : [fallbackSlide];
-  const [bookmarked, setBookmarked] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(post.artist.isFollowing);
-  const [reaction, setReaction] = useState({
-    liked: false,
-    likes: post.likes,
-  });
   const [slideIndex, setSlideIndex] = useState(0);
   const currentSlide = slides[slideIndex] ?? fallbackSlide;
-
-  const toggleLike = () => {
-    setReaction((current) => ({
-      liked: !current.liked,
-      likes: Math.max(0, current.likes + (current.liked ? -1 : 1)),
-    }));
-  };
+  const bookmarked = isFeedPostBookmarked(actionSnapshot, post.id);
+  const isFollowing = getArtistFollowing(
+    actionSnapshot,
+    post.artist.username,
+    post.artist.isFollowing,
+  );
+  const liked = isFeedPostLiked(actionSnapshot, post.id);
+  const likes = getFeedPostLikeCount(actionSnapshot, post.id, post.likes);
+  const commentCount = getFeedPostCommentCount(
+    actionSnapshot,
+    post.id,
+    post.comments,
+  );
 
   const showPreviousSlide = () => {
     setSlideIndex((current) => (current - 1 + slides.length) % slides.length);
@@ -178,7 +225,7 @@ function FeedPostArticle({
   };
 
   return (
-    <article className="border-b border-[#f0f2f5] bg-white">
+    <article className="border-b border-white bg-white">
       <div className="flex h-[62px] items-center px-[14px] py-4">
         <Link className="flex min-w-0 flex-1 items-center" href={post.artist.href}>
           <ProfileAvatar className="mx-[7px]" size={32} />
@@ -193,7 +240,9 @@ function FeedPostArticle({
         </Link>
         <ActionButton
           aria-pressed={isFollowing}
-          onClick={() => setIsFollowing((current) => !current)}
+          onClick={() =>
+            setArtistFollowing(post.artist.username, !isFollowing)
+          }
           variant={isFollowing ? "following" : "follow"}
         >
           {isFollowing ? "팔로잉" : "팔로우"}
@@ -239,13 +288,13 @@ function FeedPostArticle({
         <div className="flex h-10 items-center">
           <div className="flex items-center gap-1">
             <PostActionIcon
-              active={reaction.liked}
-              aria-label={reaction.liked ? "좋아요 취소" : "좋아요"}
-              aria-pressed={reaction.liked}
+              active={liked}
+              aria-label={liked ? "좋아요 취소" : "좋아요"}
+              aria-pressed={liked}
               kind="heart"
-              onClick={toggleLike}
+              onClick={() => toggleFeedPostLike(post.id)}
             />
-            <span className="text-xs font-bold text-black">{reaction.likes}</span>
+            <span className="text-xs font-bold text-black">{likes}</span>
           </div>
           <div className="ml-[25px] flex items-center gap-1">
             <PostActionIcon
@@ -253,7 +302,7 @@ function FeedPostArticle({
               kind="message"
               onClick={onOpenComments}
             />
-            <span className="text-xs font-bold text-black">{post.comments}</span>
+            <span className="text-xs font-bold text-black">{commentCount}</span>
           </div>
           <PostActionIcon
             active={bookmarked}
@@ -261,19 +310,19 @@ function FeedPostArticle({
             aria-pressed={bookmarked}
             className="ml-auto"
             kind="bookmark"
-            onClick={() => setBookmarked((current) => !current)}
+            onClick={() => toggleFeedPostBookmark(post.id)}
           />
         </div>
         <div className="mt-[5px]">
-          <p className="flex items-center text-[10px] leading-3 text-black">
+          <p className="flex items-center text-xs leading-4 text-black">
             <span className="relative mr-2 flex w-[29px] shrink-0">
               <ProfileAvatar className="border border-white" size={22} />
               <ProfileAvatar className="-ml-[15px] border border-white" size={22} />
             </span>
             <span>{post.likedBy}</span>
           </p>
-          <p className="mt-2 text-[10px] font-medium leading-3 text-black">
-            <Link className="font-bold" href={post.artist.href}>
+          <p className="mt-3 text-sm font-normal leading-[18px] text-black">
+            <Link className="font-semibold" href={post.artist.href}>
               {post.artist.username}
             </Link>{" "}
             <Link href={post.href}>{post.body}</Link>
@@ -286,18 +335,40 @@ function FeedPostArticle({
 
 export function HomeFeed() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentPost, setCommentPost] = useState<FeedPost | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [hasMore, setHasMore] = useState(true);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [status, setStatus] = useState<FeedStatus>("loading");
+  const appSettings = useSyncExternalStore(
+    subscribeAppSettingsChange,
+    readAppSettings,
+    () => defaultAppSettings,
+  );
+  const displayedPosts = useMemo(
+    () => sortFeedPostsByContentDisplay(posts, appSettings.contentDisplay),
+    [appSettings.contentDisplay, posts],
+  );
+  const selectedContentDisplayOption = useMemo(
+    () =>
+      contentDisplayOptions.find(
+        (option) => option.id === appSettings.contentDisplay,
+      ) ?? contentDisplayOptions[0],
+    [appSettings.contentDisplay],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
 
-    fetchFeedPage({ limit: FEED_PAGE_SIZE }, controller.signal)
+    fetchFeedPage(
+      {
+        contentDisplay: appSettings.contentDisplay,
+        limit: FEED_PAGE_SIZE,
+      },
+      controller.signal,
+    )
       .then((page) => {
         setPosts(page.items);
         setCursor(page.nextCursor);
@@ -317,7 +388,7 @@ export function HomeFeed() {
       });
 
     return () => controller.abort();
-  }, [refreshKey]);
+  }, [appSettings.contentDisplay, refreshKey]);
 
   const loadMore = useCallback(() => {
     if (!cursor || !hasMore || status !== "ready") {
@@ -326,7 +397,11 @@ export function HomeFeed() {
 
     setStatus("loadingMore");
 
-    fetchFeedPage({ cursor, limit: FEED_PAGE_SIZE })
+    fetchFeedPage({
+      contentDisplay: appSettings.contentDisplay,
+      cursor,
+      limit: FEED_PAGE_SIZE,
+    })
       .then((page) => {
         setPosts((currentPosts) => [...currentPosts, ...page.items]);
         setCursor(page.nextCursor);
@@ -340,7 +415,7 @@ export function HomeFeed() {
         );
         setStatus("error");
       });
-  }, [cursor, hasMore, status]);
+  }, [appSettings.contentDisplay, cursor, hasMore, status]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -373,19 +448,24 @@ export function HomeFeed() {
   return (
     <>
       <div className="min-h-screen bg-white pb-[70px]">
-        <header className="sticky top-0 z-20 flex h-[50px] items-center bg-white px-[26px]">
+        <header className="sticky top-0 z-20 flex h-[50px] items-center justify-between bg-white px-[26px]">
           <h1 className="text-[13px] font-bold tracking-[-0.01em] text-black">
             Artroom
           </h1>
+          {appSettings.contentDisplay !== "balanced" ? (
+            <span className="rounded-[5px] bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+              {selectedContentDisplayOption.label}
+            </span>
+          ) : null}
         </header>
 
         {status === "loading" ? <FeedSkeleton /> : null}
 
-        {posts.map((post, index) => (
+        {displayedPosts.map((post, index) => (
           <FeedPostArticle
             index={index}
             key={post.id}
-            onOpenComments={() => setCommentsOpen(true)}
+            onOpenComments={() => setCommentPost(post)}
             post={post}
           />
         ))}
@@ -422,7 +502,9 @@ export function HomeFeed() {
       </div>
 
       <BottomNav />
-      {commentsOpen ? <CommentsSheet onClose={() => setCommentsOpen(false)} /> : null}
+      {commentPost ? (
+        <CommentsSheet onClose={() => setCommentPost(null)} post={commentPost} />
+      ) : null}
     </>
   );
 }

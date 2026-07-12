@@ -3,10 +3,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { FigmaInput, FigmaTag } from "@/components/figma-controls";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { UiCard } from "@/components/ui-card";
+import {
+  contentDisplayOptions,
+  defaultAppSettings,
+  readAppSettings,
+  sortSearchResultsByContentDisplay,
+  subscribeAppSettingsChange,
+} from "@/lib/app-settings";
+import {
+  CREATOR_COMMISSION_PUBLIC_DISPLAY_NAME,
+  CREATOR_COMMISSION_PUBLIC_IMAGE_ALT,
+  CREATOR_COMMISSION_PUBLIC_IMAGE_SRC,
+  CREATOR_COMMISSION_PUBLIC_USERNAME,
+  defaultCreatorCommissionSettings,
+  formatCreatorCommissionPrice,
+  isCreatorCommissionReady,
+  readCreatorCommissionSettings,
+  subscribeCreatorCommissionSettingsChange,
+} from "@/lib/creator-commission-settings";
 import { fetchSearchResults } from "@/lib/search-client";
 import { searchTags } from "@/lib/search-tags";
 import type {
@@ -24,6 +42,7 @@ const resultTabs = [
   { id: "all", label: "전체" },
   { id: "user", label: "유저" },
   { id: "artwork", label: "작품" },
+  { id: "commission", label: "커미션" },
   { id: "feed", label: "피드" },
 ] satisfies { id: SearchResultTabId; label: string }[];
 
@@ -58,6 +77,7 @@ function useDebouncedValue(value: string, delayMs: number) {
 function SearchResultCard({ result }: { result: SearchResult }) {
   const destinationLabel = {
     artwork: "작품 보기",
+    commission: "커미션 보기",
     feed: "피드 보기",
     user: "프로필 보기",
   }[result.type];
@@ -189,7 +209,24 @@ export function SearchClient() {
   const [status, setStatus] = useState<SearchStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const commissionSettings = useSyncExternalStore(
+    subscribeCreatorCommissionSettingsChange,
+    readCreatorCommissionSettings,
+    () => defaultCreatorCommissionSettings,
+  );
+  const appSettings = useSyncExternalStore(
+    subscribeAppSettingsChange,
+    readAppSettings,
+    () => defaultAppSettings,
+  );
   const debouncedQuery = useDebouncedValue(query, 250);
+  const selectedContentDisplayOption = useMemo(
+    () =>
+      contentDisplayOptions.find(
+        (option) => option.id === appSettings.contentDisplay,
+      ) ?? contentDisplayOptions[0],
+    [appSettings.contentDisplay],
+  );
 
   const urlSearch = useMemo(() => {
     const params = new URLSearchParams();
@@ -221,6 +258,7 @@ export function SearchClient() {
 
     fetchSearchResults(
       {
+        contentDisplay: appSettings.contentDisplay,
         limit: 30,
         query: debouncedQuery,
         tags: selectedTags,
@@ -244,21 +282,86 @@ export function SearchClient() {
       });
 
     return () => controller.abort();
-  }, [debouncedQuery, refreshKey, selectedTags]);
+  }, [appSettings.contentDisplay, debouncedQuery, refreshKey, selectedTags]);
 
+  const localCommissionResult = useMemo<SearchResult | null>(() => {
+    if (
+      !commissionSettings.accepting ||
+      !isCreatorCommissionReady(commissionSettings)
+    ) {
+      return null;
+    }
+
+    return {
+      badges: [
+        formatCreatorCommissionPrice(commissionSettings.basePrice),
+        `슬롯 ${Number(commissionSettings.slots) || 0}개`,
+      ],
+      description: `${commissionSettings.scope} ${commissionSettings.guidance}`,
+      href: `/artist/${CREATOR_COMMISSION_PUBLIC_USERNAME}#profile-commissions`,
+      id: "commission-local-creator",
+      imageAlt: CREATOR_COMMISSION_PUBLIC_IMAGE_ALT,
+      imageSrc: CREATOR_COMMISSION_PUBLIC_IMAGE_SRC,
+      subtitle: `@${CREATOR_COMMISSION_PUBLIC_USERNAME} · ${commissionSettings.responseTime}`,
+      tags: ["commission", "character"],
+      title: `${CREATOR_COMMISSION_PUBLIC_DISPLAY_NAME} 커미션`,
+      type: "commission",
+    };
+  }, [commissionSettings]);
+  const augmentedResults = useMemo(() => {
+    const baseResults = response?.results ?? [];
+
+    if (!localCommissionResult) {
+      return baseResults;
+    }
+
+    const selectedTagMatches =
+      selectedTags.length === 0 ||
+      selectedTags.some((tag) => localCommissionResult.tags.includes(tag));
+    const normalizedQuery = query.trim().toLowerCase();
+    const queryMatches =
+      !normalizedQuery ||
+      [
+        localCommissionResult.title,
+        localCommissionResult.subtitle,
+        localCommissionResult.description,
+        ...localCommissionResult.tags,
+        ...localCommissionResult.badges,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery);
+
+    if (!selectedTagMatches || !queryMatches) {
+      return baseResults;
+    }
+
+    return [
+      localCommissionResult,
+      ...baseResults.filter((result) => result.id !== localCommissionResult.id),
+    ];
+  }, [localCommissionResult, query, response?.results, selectedTags]);
+  const sortedResults = useMemo(
+    () =>
+      sortSearchResultsByContentDisplay(
+        augmentedResults,
+        appSettings.contentDisplay,
+      ),
+    [appSettings.contentDisplay, augmentedResults],
+  );
   const visibleResults =
     selectedResultTab === "all"
-      ? response?.results
-      : response?.results.filter((result) => result.type === selectedResultTab);
+      ? sortedResults
+      : sortedResults.filter((result) => result.type === selectedResultTab);
   const resultCounts = resultTabs.reduce<Record<SearchResultTabId, number>>(
     (counts, tab) => {
       counts[tab.id] =
         tab.id === "all"
-          ? (response?.results.length ?? 0)
-          : (response?.results.filter((result) => result.type === tab.id).length ?? 0);
+          ? sortedResults.length
+          : sortedResults.filter((result) => result.type === tab.id).length;
       return counts;
     },
-    { all: 0, artwork: 0, feed: 0, user: 0 },
+    { all: 0, artwork: 0, commission: 0, feed: 0, user: 0 },
   );
   const hasSearchCondition =
     query.trim() || selectedTags.length > 0 || selectedResultTab !== "all";
@@ -343,10 +446,17 @@ export function SearchClient() {
         })}
       </div>
 
-      <div className="mt-7 flex items-center justify-between">
-        <h2 className="text-base font-semibold">{title}</h2>
+      <div className="mt-7 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className="text-base font-semibold">{title}</h2>
+          {appSettings.contentDisplay !== "balanced" ? (
+            <span className="shrink-0 rounded-[5px] bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+              {selectedContentDisplayOption.label}
+            </span>
+          ) : null}
+        </div>
         {response ? (
-          <span className="text-xs font-medium text-[#929aa8]">
+          <span className="shrink-0 text-xs font-medium text-[#929aa8]">
             {visibleResults?.length ?? 0}개
           </span>
         ) : null}

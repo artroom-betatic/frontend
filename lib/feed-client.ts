@@ -14,6 +14,9 @@ export async function fetchFeedPage(
   if (request.limit) {
     params.set("limit", String(request.limit));
   }
+  if (request.contentDisplay && request.contentDisplay !== "balanced") {
+    params.set("contentDisplay", request.contentDisplay);
+  }
 
   const query = params.toString();
   const separator = feedEndpoint.includes("?") ? "&" : "?";

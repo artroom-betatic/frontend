@@ -404,5 +404,17 @@ export function getCatalogSearchResults(): SearchResult[] {
       title: artwork.title,
       type: "artwork",
     })),
+    ...commissionOfferDetails.map<SearchResult>((commission) => ({
+      badges: commission.badges,
+      description: commission.description,
+      href: commission.href,
+      id: `commission-${commission.slug}`,
+      imageAlt: commission.imageAlt,
+      imageSrc: commission.imageSrc,
+      subtitle: `${commission.subtitle} · @${commission.creator.username}`,
+      tags: commission.tags,
+      title: commission.title,
+      type: "commission",
+    })),
   ];
 }
