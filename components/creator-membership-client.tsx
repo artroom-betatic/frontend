@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { AppFrame } from "@/components/app-frame";
 import { MobileHeader } from "@/components/mobile-header";
 import { ScreenSection } from "@/components/screen-section";
-import { Toggle } from "@/components/toggle";
 import { UiCard } from "@/components/ui-card";
 import {
   activateCreatorMembership,
@@ -18,6 +18,12 @@ import {
   saveCreatorMembershipDraft,
   subscribeCreatorMembershipDraftChange,
 } from "@/lib/creator-membership";
+import {
+  defaultPayoutSettings,
+  isPayoutSettingsReady,
+  readPayoutSettings,
+  subscribePayoutSettingsChange,
+} from "@/lib/payout-settings";
 import { writeRouteToast } from "@/lib/route-toast";
 import { useCreatorMembershipStatus } from "@/lib/use-creator-membership";
 
@@ -67,12 +73,18 @@ export function CreatorMembershipClient() {
     readCreatorMembershipDraft,
     () => defaultCreatorMembershipDraft,
   );
+  const payoutSettings = useSyncExternalStore(
+    subscribePayoutSettingsChange,
+    readPayoutSettings,
+    () => defaultPayoutSettings,
+  );
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const validTierCount = draft.tiers.filter(isTierReady).length;
   const validContentCount = draft.contents.filter(isContentReady).length;
+  const payoutReady = isPayoutSettingsReady(payoutSettings);
   const canStartMembership =
-    validTierCount > 0 && validContentCount > 0 && draft.payoutConfirmed;
+    validTierCount > 0 && validContentCount > 0 && payoutReady;
   const isActive = creatorMembershipStatus === "active";
   const title = isActive ? "구독 멤버십 관리" : "구독 멤버십 만들기";
   const summary = isActive
@@ -91,12 +103,12 @@ export function CreatorMembershipClient() {
         title: "멤버십 전용 피드에 올릴 첫 게시물을 준비합니다.",
       },
       {
-        complete: draft.payoutConfirmed,
-        detail: draft.payoutConfirmed ? "확인 완료" : "확인 필요",
-        title: "공개 전에 정산 정보를 확인합니다.",
+        complete: payoutReady,
+        detail: payoutReady ? "등록 완료" : "등록 필요",
+        title: "공개 전에 정산 정보를 등록합니다.",
       },
     ],
-    [draft.payoutConfirmed, validContentCount, validTierCount],
+    [payoutReady, validContentCount, validTierCount],
   );
 
   const updateDraft = (nextDraft: CreatorMembershipDraft) => {
@@ -437,22 +449,18 @@ export function CreatorMembershipClient() {
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
-                  정산 정보를 확인했습니다.
+                  정산 정보 {payoutReady ? "등록 완료" : "등록 필요"}
                 </p>
                 <p className="mt-2 text-xs leading-5 text-subtle">
-                  멤버십 수익을 받을 계좌와 정산 주기를 확인한 뒤 공개할 수 있습니다.
+                  멤버십 수익을 받을 계좌와 정산 기준이 등록되어야 공개할 수 있습니다.
                 </p>
               </div>
-              <Toggle
-                checked={draft.payoutConfirmed}
-                label="정산 정보 확인 상태 전환"
-                onClick={() =>
-                  updateDraft({
-                    ...draft,
-                    payoutConfirmed: !draft.payoutConfirmed,
-                  })
-                }
-              />
+              <Link
+                className="shrink-0 rounded-md bg-panel px-3 py-2 text-xs font-semibold text-primary"
+                href="/creator/payout"
+              >
+                설정
+              </Link>
             </div>
           </UiCard>
         </ScreenSection>
@@ -521,7 +529,7 @@ export function CreatorMembershipClient() {
 
         {!isActive && !canStartMembership ? (
           <p className="mt-3 text-xs font-medium leading-5 text-muted">
-            등급, 전용 콘텐츠, 정산 확인을 모두 완료하면 멤버십을 시작할 수 있습니다.
+            등급, 전용 콘텐츠, 정산 정보 등록을 모두 완료하면 멤버십을 시작할 수 있습니다.
           </p>
         ) : null}
 

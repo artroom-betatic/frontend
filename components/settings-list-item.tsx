@@ -190,7 +190,7 @@ export function SettingsListItem({
         <SettingsListIcon name={icon} />
       </span>
       <span className="flex min-h-11 min-w-0 flex-1 flex-col justify-center">
-        <span className="block text-base font-semibold leading-5 text-black">
+        <span className="block text-base font-semibold leading-5 text-foreground">
           {title}
         </span>
         <span className="mt-1 block text-xs font-medium leading-5 text-subtle">

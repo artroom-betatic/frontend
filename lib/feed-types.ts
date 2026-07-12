@@ -1,3 +1,5 @@
+import type { ContentDisplayMode } from "./app-settings";
+
 export type ArtistSummary = {
   avatarSrc: string;
   displayName: string;
@@ -40,6 +42,7 @@ export type FeedImageSlide = {
 };
 
 export type FeedPageRequest = {
+  contentDisplay?: ContentDisplayMode;
   cursor?: string;
   limit?: number;
 };

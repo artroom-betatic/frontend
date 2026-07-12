@@ -12,6 +12,7 @@ import {
   clearStoredProfileImage,
   saveStoredProfileImage,
 } from "@/lib/my-profile";
+import type { ArtistProfile } from "@/lib/feed-types";
 import {
   clearRouteToast,
   readRouteToast,
@@ -26,6 +27,11 @@ const myStats = [
   { label: "소장 작품", value: "18" },
   { label: "내 작품", value: "4" },
 ];
+
+const fallbackProfile = {
+  followersLabel: "팔로워 0",
+  username: "user_123",
+} satisfies Pick<ArtistProfile, "followersLabel" | "username">;
 
 const myCollectionItems = [
   {
@@ -61,9 +67,14 @@ const myCreationItems = [
   title: string;
 }[];
 
-export function MyPageClient() {
+type MyPageClientProps = {
+  profile: Pick<ArtistProfile, "followersLabel" | "username"> | null;
+};
+
+export function MyPageClient({ profile }: MyPageClientProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const creatorMembershipStatus = useCreatorMembershipStatus();
+  const myProfile = profile ?? fallbackProfile;
   const profileImageSrc = useProfileImage();
   const toastMessage = useSyncExternalStore(
     subscribeRouteToastChange,
@@ -145,7 +156,12 @@ export function MyPageClient() {
           </button>
           <div className="min-w-0 flex-1 pt-1">
             <h1 className="truncate text-xl font-bold text-black">내 프로필</h1>
-            <p className="mt-1 text-xs font-medium text-[#929aa8]">@user_123</p>
+            <p className="mt-1 text-xs font-medium text-[#929aa8]">
+              @{myProfile.username}
+            </p>
+            <p className="mt-2 text-xs font-medium text-[#307cff]">
+              {myProfile.followersLabel}
+            </p>
           </div>
         </div>
 

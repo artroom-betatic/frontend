@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import {
+  defaultUserActionSnapshot,
+  getArtistFollowing,
+  readUserActionSnapshot,
+  setArtistFollowing,
+  subscribeUserActionsChange,
+} from "@/lib/user-actions";
 import { ActionButton } from "./action-button";
 
 type ArtistActionsProps = {
@@ -16,15 +23,23 @@ export function ArtistActions({
   membershipLabel,
 }: ArtistActionsProps) {
   const router = useRouter();
-  const [isFollowing, setIsFollowing] = useState(initialFollowing);
+  const actionSnapshot = useSyncExternalStore(
+    subscribeUserActionsChange,
+    readUserActionSnapshot,
+    () => defaultUserActionSnapshot,
+  );
   const [statusMessage, setStatusMessage] = useState("");
+  const isFollowing = getArtistFollowing(
+    actionSnapshot,
+    artistUsername,
+    initialFollowing,
+  );
 
   const toggleFollow = () => {
-    setIsFollowing((current) => {
-      const next = !current;
-      setStatusMessage(next ? "팔로우했습니다." : "팔로우를 취소했습니다.");
-      return next;
-    });
+    const next = !isFollowing;
+
+    setArtistFollowing(artistUsername, next);
+    setStatusMessage(next ? "팔로우했습니다." : "팔로우를 취소했습니다.");
   };
 
   return (
