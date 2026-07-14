@@ -4,8 +4,14 @@ import { useSyncExternalStore } from "react";
 import { ContentListCard } from "@/components/content-list-card";
 import { ScreenSection } from "@/components/screen-section";
 import { UiCard } from "@/components/ui-card";
+import {
+  defaultAppSettings,
+  readAppSettings,
+  subscribeAppSettingsChange,
+} from "@/lib/app-settings";
 import type { ArtworkDetail } from "@/lib/catalog-data";
 import type { FeedPost } from "@/lib/feed-types";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 import {
   defaultUserActionSnapshot,
   getFeedPostCommentCount,
@@ -26,6 +32,11 @@ export function LibraryClient({ artworks, feedPosts }: LibraryClientProps) {
     readUserActionSnapshot,
     () => defaultUserActionSnapshot,
   );
+  const appSettings = useSyncExternalStore(
+    subscribeAppSettingsChange,
+    readAppSettings,
+    () => defaultAppSettings,
+  );
   const bookmarkedPosts = feedPosts.filter((post) =>
     isFeedPostBookmarked(actionSnapshot, post.id),
   );
@@ -36,7 +47,7 @@ export function LibraryClient({ artworks, feedPosts }: LibraryClientProps) {
   ];
 
   return (
-    <main className="px-6 pb-[96px] pt-5">
+    <main className="px-6 pb-24 pt-5">
       <p className="text-sm font-medium leading-6 text-subtle">
         구매한 디지털 작품과 저장한 피드를 다시 볼 수 있습니다.
       </p>
@@ -45,7 +56,7 @@ export function LibraryClient({ artworks, feedPosts }: LibraryClientProps) {
         {collectionSummary.map((item) => (
           <UiCard className="bg-white p-3 text-center" key={item.label}>
             <p className="text-lg font-bold text-foreground">{item.value}</p>
-            <p className="mt-1 text-[10px] text-muted">{item.label}</p>
+            <p className="mt-1 text-2xs text-muted">{item.label}</p>
           </UiCard>
         ))}
       </div>
@@ -78,15 +89,20 @@ export function LibraryClient({ artworks, feedPosts }: LibraryClientProps) {
                 imageAlt={post.imageAlt}
                 imageSrc={post.imageSrc}
                 key={post.id}
-                meta={`좋아요 ${getFeedPostLikeCount(
-                  actionSnapshot,
-                  post.id,
-                  post.likes,
-                )} · 댓글 ${getFeedPostCommentCount(
-                  actionSnapshot,
-                  post.id,
-                  post.comments,
-                )}`}
+                meta={
+                  post.artist.username !== MY_PROFILE_USERNAME ||
+                  appSettings.engagementCountDisplay === "show"
+                    ? `좋아요 ${getFeedPostLikeCount(
+                        actionSnapshot,
+                        post.id,
+                        post.likes,
+                      )} · 댓글 ${getFeedPostCommentCount(
+                        actionSnapshot,
+                        post.id,
+                        post.comments,
+                      )}`
+                    : undefined
+                }
                 subtitle={`@${post.artist.username}`}
                 title={`${post.artist.displayName}의 피드`}
               />

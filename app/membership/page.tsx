@@ -18,7 +18,7 @@ export default function MembershipPage() {
         backHref="/my"
         title="가입한 멤버십 관리"
       />
-      <main className="px-6 pb-[96px] pt-6">
+      <main className="px-6 pb-24 pt-6">
         <p className="text-sm font-medium leading-6 text-subtle">
           현재 가입 중인 멤버십과 다음 결제일을 확인합니다.
         </p>

@@ -25,6 +25,7 @@ export type FeedPost = {
   artist: ArtistSummary;
   body: string;
   comments: number;
+  commentsClosed?: boolean;
   createdAtLabel: string;
   href: string;
   id: string;
@@ -33,6 +34,7 @@ export type FeedPost = {
   imageSrc: string;
   likedBy: string;
   likes: number;
+  tags: string[];
 };
 
 export type FeedImageSlide = {

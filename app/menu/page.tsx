@@ -12,8 +12,8 @@ export default function MenuPage() {
   return (
     <AppFrame>
       <MobileHeader backBehavior="history" backHref="/" title="전체메뉴" />
-      <main className="px-6 pb-[96px] pt-5">
-        <p className="text-xs leading-5 text-[#929aa8]">
+      <main className="px-6 pb-24 pt-5">
+        <p className="text-xs leading-5 text-muted">
           커미션, 정산, 수익, 앱 설정처럼 관리가 필요한 기능을 모아둡니다.
         </p>
         <MenuClient />

@@ -21,12 +21,12 @@ export function FigmaInput({
   if (kind === "search") {
     return (
       <label
-        className={`flex h-[38px] min-w-[140px] items-center gap-2 rounded-[4px] border border-[#d1d5db] bg-white px-3 py-2 ${className}`}
+        className={`flex h-9.5 min-w-35 items-center gap-2 rounded border border-line bg-white px-3 py-2 ${className}`}
       >
         <span className="sr-only">{label ?? "검색"}</span>
         <AssetIcon className="h-4 w-4 shrink-0" name="search-input" />
         <input
-          className="min-w-0 flex-1 bg-transparent text-sm font-normal text-[#1f2937] outline-none placeholder:text-[#9ca3af]"
+          className="min-w-0 flex-1 bg-transparent text-sm font-normal text-foreground outline-none placeholder:text-muted"
           placeholder={placeholder}
           type="search"
           {...props}
@@ -36,14 +36,14 @@ export function FigmaInput({
   }
 
   return (
-    <label className={`flex flex-col gap-[6px] ${className}`}>
+    <label className={`flex flex-col gap-1.5 ${className}`}>
       {label ? (
-        <span className="text-sm font-normal leading-none text-[#1f2937]">
+        <span className="text-sm font-normal leading-none text-foreground">
           {label}
         </span>
       ) : null}
       <input
-        className="h-[38px] min-w-[140px] rounded-[4px] border border-[#d1d5db] bg-white px-3 text-sm outline-none placeholder:text-[#9ca3af]"
+        className="h-9.5 min-w-35 rounded border border-line bg-white px-3 text-sm outline-none placeholder:text-muted"
         placeholder={placeholder}
         type={kind}
         {...props}
@@ -64,14 +64,14 @@ export function FigmaSelect({
   label,
 }: FigmaSelectProps) {
   return (
-    <div className={`flex flex-col gap-[6px] ${className}`}>
+    <div className={`flex flex-col gap-1.5 ${className}`}>
       {label ? (
-        <span className="text-sm font-normal leading-none text-[#1f2937]">
+        <span className="text-sm font-normal leading-none text-foreground">
           {label}
         </span>
       ) : null}
       <button
-        className="flex h-[38px] min-w-[140px] items-center justify-between rounded-[4px] border border-[#d1d5db] bg-white px-3 py-2 text-sm font-normal text-[#9ca3af]"
+        className="flex h-9.5 min-w-35 items-center justify-between rounded border border-line bg-white px-3 py-2 text-sm font-normal text-muted"
         type="button"
       >
         <span>{children}</span>
@@ -94,8 +94,8 @@ export function FigmaTag({
   className = "",
   ...props
 }: FigmaTagProps) {
-  const tagClassName = `flex h-[30px] items-center justify-center rounded-[5px] px-[9px] pb-[6px] pt-[7px] text-sm font-semibold leading-none ${
-    active ? "bg-[#307cff] text-white" : "bg-[#f6f6f6] text-[#666]"
+  const tagClassName = `flex h-7.5 items-center justify-center rounded-md px-2 py-1.5 text-sm font-semibold leading-none ${
+    active ? "bg-primary text-white" : "bg-panel text-subtle"
   } ${className}`;
 
   if (as === "button") {

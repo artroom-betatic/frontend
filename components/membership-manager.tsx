@@ -33,7 +33,7 @@ export function MembershipManager() {
         <UiCard>
           <p className="text-xs">현재 멤버십</p>
           <p className="mt-3 text-xl font-bold">{membershipName}</p>
-          <p className="mt-3 text-[11px]">
+          <p className="mt-3 text-xs">
             {cancelScheduled ? "해지 예약됨" : "월간 구독"}
           </p>
         </UiCard>
@@ -69,7 +69,7 @@ export function MembershipManager() {
             <span>매월 15일</span>
           </div>
         </UiCard>
-        <div className="mt-[22px] grid gap-3">
+        <div className="mt-5.5 grid gap-3">
           <ActionButton onClick={changeMembership} variant="secondary">
             멤버십 변경
           </ActionButton>
@@ -85,7 +85,7 @@ export function MembershipManager() {
           </ActionButton>
         </div>
         {statusMessage ? (
-          <p className="mt-4 text-xs font-medium text-[#307cff]">{statusMessage}</p>
+          <p className="mt-4 text-xs font-medium text-primary">{statusMessage}</p>
         ) : null}
       </ScreenSection>
     </>

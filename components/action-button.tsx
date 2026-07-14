@@ -12,16 +12,16 @@ export function ActionButton({
   ...props
 }: ActionButtonProps) {
   const styles = {
-    primary: "bg-[#307cff] text-white",
-    secondary: "bg-[rgba(208,213,221,0.2)] text-black",
-    danger: "bg-[rgba(208,213,221,0.2)] text-black",
-    follow: "bg-[#f0f2f5] text-black",
-    following: "bg-[#f0f2f5] text-black",
+    primary: "bg-primary text-white",
+    secondary: "bg-line/20 text-black",
+    danger: "bg-line/20 text-black",
+    follow: "bg-panel text-black",
+    following: "bg-panel text-black",
   }[variant];
 
   return (
     <button
-      className={`min-h-6 min-w-[45px] rounded-[5px] px-3 py-[5px] text-xs font-medium leading-none ${styles} ${className}`}
+      className={`min-h-6 min-w-11 rounded-md px-3 py-1.25 text-xs font-medium leading-none ${styles} ${className}`}
       type="button"
       {...props}
     >

@@ -7,8 +7,8 @@ import { ArtistActions } from "@/components/artist-actions";
 import { BottomNav } from "@/components/bottom-nav";
 import { ContentListCard } from "@/components/content-list-card";
 import { CreatorCommissionPublicCard } from "@/components/creator-commission-public-card";
-import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
+import { ProfileBioText } from "@/components/profile-bio-text";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { SeriesCard } from "@/components/series-card";
 import { UiCard } from "@/components/ui-card";
@@ -18,6 +18,7 @@ import {
   getArtistSeries,
 } from "@/lib/catalog-data";
 import { getArtistResource } from "@/lib/server-data";
+import { getTagSearchHref } from "@/lib/tag-search";
 
 type ArtistPageProps = {
   params: Promise<{ username: string }>;
@@ -75,7 +76,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
         backHref="/search"
         title={profile.displayName}
       />
-      <main className="pb-[96px]">
+      <main className="pb-24">
         <section className="bg-white px-6 pb-6 pt-5">
           <div className="flex items-start gap-4">
             <ProfileAvatar size={72} />
@@ -83,36 +84,46 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
               <h1 className="truncate text-xl font-bold text-black">
                 {profile.displayName}
               </h1>
-              <p className="mt-1 text-xs font-medium text-[#929aa8]">
+              <p className="mt-1 text-xs font-medium text-muted">
                 @{profile.username}
               </p>
-              <p className="mt-2 text-xs font-medium text-[#307cff]">
+              <p className="mt-2 text-xs font-medium text-primary">
                 {profile.followersLabel}
               </p>
             </div>
           </div>
 
           <p className="mt-5 text-sm font-semibold text-black">{profile.coverTitle}</p>
-          <p className="mt-3 text-xs leading-5 text-[#1f2937]">{profile.bio}</p>
+          <ProfileBioText
+            className="mt-3 text-xs leading-5 text-foreground"
+            fallbackBio={profile.bio}
+            username={profile.username}
+          />
 
-          <div className="mt-4 flex flex-wrap gap-[6px]">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {profile.tags.map((tag) => (
-              <FigmaTag key={tag}>{tag}</FigmaTag>
+              <Link
+                className="flex min-h-7 items-center justify-center rounded-md bg-panel px-2 py-1.5 text-sm font-semibold leading-none text-subtle"
+                href={getTagSearchHref(tag)}
+                key={tag}
+              >
+                {tag}
+              </Link>
             ))}
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2">
             <UiCard className="p-3 text-center">
               <p className="text-lg font-bold">{profile.stats.posts}</p>
-              <p className="mt-1 text-[10px] text-[#929aa8]">게시물</p>
+              <p className="mt-1 text-2xs text-muted">게시물</p>
             </UiCard>
             <UiCard className="p-3 text-center">
               <p className="text-lg font-bold">{profile.stats.works}</p>
-              <p className="mt-1 text-[10px] text-[#929aa8]">작품</p>
+              <p className="mt-1 text-2xs text-muted">작품</p>
             </UiCard>
             <UiCard className="p-3 text-center">
               <p className="text-lg font-bold">{profile.stats.commissions}</p>
-              <p className="mt-1 text-[10px] text-[#929aa8]">커미션</p>
+              <p className="mt-1 text-2xs text-muted">커미션</p>
             </UiCard>
           </div>
 
@@ -120,7 +131,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             <div className="mt-5 grid gap-2">
               {profileEntrypoints.map((entrypoint) => (
                 <Link
-                  className="flex items-center justify-between gap-3 rounded-[6px] border border-[#e5e7eb] bg-[#f9fafb] p-3"
+                  className="flex items-center justify-between gap-3 rounded-md border border-line bg-panel p-3"
                   href={entrypoint.href}
                   key={entrypoint.title}
                 >
@@ -128,11 +139,11 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
                     <span className="block text-sm font-semibold text-black">
                       {entrypoint.title}
                     </span>
-                    <span className="mt-1 block truncate text-xs font-medium text-[#929aa8]">
+                    <span className="mt-1 block truncate text-xs font-medium text-muted">
                       {entrypoint.description}
                     </span>
                   </span>
-                  <span className="shrink-0 text-xs font-semibold text-[#307cff]">
+                  <span className="shrink-0 text-xs font-semibold text-primary">
                     보기
                   </span>
                 </Link>
@@ -152,7 +163,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold">작품</h2>
               <Link
-                className="text-xs font-semibold text-[#307cff]"
+                className="text-xs font-semibold text-primary"
                 href={artworkSearchHref}
               >
                 더 보기
@@ -180,7 +191,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold">시리즈</h2>
               <Link
-                className="text-xs font-semibold text-[#307cff]"
+                className="text-xs font-semibold text-primary"
                 href={seriesListHref}
               >
                 더 보기
@@ -200,17 +211,17 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             <div className="mt-4 grid gap-3">
               {profileCommissions.map((commission) => (
                 <Link
-                  className="block rounded-[6px] border border-[#e5e7eb] bg-white p-3"
+                  className="block rounded-md border border-line bg-white p-3"
                   href={commission.href}
                   key={commission.slug}
                 >
                   <p className="truncate text-sm font-semibold text-black">
                     {commission.title}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-[#307cff]">
+                  <p className="mt-1 text-xs font-semibold text-primary">
                     {commission.priceLabel}
                   </p>
-                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#1f2937]">
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-foreground">
                     {commission.description}
                   </p>
                 </Link>
@@ -228,7 +239,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">최근 피드</h2>
             <Link
-              className="text-xs font-semibold text-[#307cff]"
+              className="text-xs font-semibold text-primary"
               href={feedListHref}
             >
               더 보기

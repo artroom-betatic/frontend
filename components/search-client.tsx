@@ -87,7 +87,7 @@ function SearchResultCard({ result }: { result: SearchResult }) {
       <UiCard>
         <div className="flex items-start gap-3">
           {result.imageSrc ? (
-            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[6px] bg-panel">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-panel">
               <Image
                 alt={result.imageAlt ?? `${result.title} 이미지`}
                 className="object-cover"
@@ -105,10 +105,10 @@ function SearchResultCard({ result }: { result: SearchResult }) {
                 {result.title}
               </p>
               {result.badges.length ? (
-                <div className="flex shrink-0 flex-wrap gap-[6px]">
+                <div className="flex shrink-0 flex-wrap gap-1.5">
                   {result.badges.map((badge) => (
                     <span
-                      className="rounded-[5px] bg-white px-2 py-1 text-[10px] font-medium text-[#929aa8]"
+                      className="rounded-md bg-white px-2 py-1 text-2xs font-medium text-muted"
                       key={badge}
                     >
                       {badge}
@@ -117,8 +117,8 @@ function SearchResultCard({ result }: { result: SearchResult }) {
                 </div>
               ) : null}
             </div>
-            <p className="mt-1 text-xs text-[#929aa8]">{result.subtitle}</p>
-            <p className="mt-3 line-clamp-2 text-xs leading-5 text-[#1f2937]">
+            <p className="mt-1 text-xs text-muted">{result.subtitle}</p>
+            <p className="mt-3 line-clamp-2 text-xs leading-5 text-foreground">
               {result.description}
             </p>
             <span className="mt-3 inline-flex text-xs font-semibold text-primary">
@@ -141,7 +141,7 @@ function SearchFeedResultCard({ result }: { result: SearchResult }) {
             <p className="truncate text-sm font-semibold text-black">
               {result.title}
             </p>
-            <p className="mt-0.5 text-[10px] font-medium text-[#929aa8]">
+            <p className="mt-0.5 text-2xs font-medium text-muted">
               {result.subtitle} · {result.badges[0]}
             </p>
           </div>
@@ -181,10 +181,10 @@ function SearchSkeleton() {
       {[0, 1, 2].map((item) => (
         <UiCard key={item}>
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full bg-[#e5e7eb]" />
+            <div className="h-11 w-11 rounded-full bg-line" />
             <div className="flex-1">
-              <div className="h-3 w-28 rounded-full bg-[#e5e7eb]" />
-              <div className="mt-3 h-3 w-40 rounded-full bg-[#eef0f3]" />
+              <div className="h-3 w-28 rounded-full bg-line" />
+              <div className="mt-3 h-3 w-40 rounded-full bg-background" />
             </div>
           </div>
         </UiCard>
@@ -392,7 +392,7 @@ export function SearchClient() {
   };
 
   return (
-    <main className="px-6 pb-[96px] pt-5">
+    <main className="px-6 pb-24 pt-5">
       <FigmaInput
         autoComplete="off"
         className="w-full"
@@ -401,7 +401,7 @@ export function SearchClient() {
         placeholder="유저, 작품, 피드 검색"
         value={query}
       />
-      <div className="mt-4 flex flex-wrap gap-[6px]">
+      <div className="mt-4 flex flex-wrap gap-1.5">
         {visibleTags.map((tag) => (
           <FigmaTag
             active={
@@ -438,7 +438,7 @@ export function SearchClient() {
               type="button"
             >
               {tab.label}
-              <span className="ml-1 text-[10px] font-medium">
+              <span className="ml-1 text-2xs font-medium">
                 {resultCounts[tab.id]}
               </span>
             </button>
@@ -450,13 +450,13 @@ export function SearchClient() {
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="text-base font-semibold">{title}</h2>
           {appSettings.contentDisplay !== "balanced" ? (
-            <span className="shrink-0 rounded-[5px] bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+            <span className="shrink-0 rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
               {selectedContentDisplayOption.label}
             </span>
           ) : null}
         </div>
         {response ? (
-          <span className="shrink-0 text-xs font-medium text-[#929aa8]">
+          <span className="shrink-0 text-xs font-medium text-muted">
             {visibleResults?.length ?? 0}개
           </span>
         ) : null}
@@ -468,9 +468,9 @@ export function SearchClient() {
         {status === "error" ? (
           <UiCard>
             <p className="text-sm font-semibold">검색을 불러오지 못했습니다</p>
-            <p className="mt-2 text-xs leading-5 text-[#929aa8]">{errorMessage}</p>
+            <p className="mt-2 text-xs leading-5 text-muted">{errorMessage}</p>
             <button
-              className="mt-4 rounded-[5px] bg-[#307cff] px-3 py-[7px] text-xs font-medium text-white"
+              className="mt-4 rounded-md bg-primary px-3 py-2 text-xs font-medium text-white"
               onClick={handleRetry}
               type="button"
             >
@@ -482,7 +482,7 @@ export function SearchClient() {
         {status === "ready" && visibleResults?.length === 0 ? (
           <UiCard>
             <p className="text-sm font-semibold">검색 결과가 없습니다</p>
-            <p className="mt-2 text-xs leading-5 text-[#929aa8]">
+            <p className="mt-2 text-xs leading-5 text-muted">
               다른 키워드나 태그로 다시 찾아보세요.
             </p>
           </UiCard>

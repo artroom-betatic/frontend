@@ -75,7 +75,7 @@ export default function PoliciesPage() {
                   <p className="text-xl font-bold">{card.value}</p>
                 </div>
               ) : null}
-              <p className="text-[11px] leading-[18px]">{card.description}</p>
+              <p className="text-xs leading-5">{card.description}</p>
             </UiCard>
           </div>
         ))}
@@ -84,7 +84,7 @@ export default function PoliciesPage() {
           <h2 className="text-base font-semibold">수익 증대 팁</h2>
           <p className="text-base font-semibold">• 정기적 신작 업로드로 노출도 증가</p>
           <p className="text-base font-semibold">• 시리즈물 구성으로 재구매율 높이기</p>
-          <p className="text-[11px]">• 팬과의 활발한 상호작용으로 충성도 구축</p>
+          <p className="text-xs">• 팬과의 활발한 상호작용으로 충성도 구축</p>
         </UiCard>
       </main>
     </AppFrame>

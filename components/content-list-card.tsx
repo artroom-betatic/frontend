@@ -71,7 +71,7 @@ export function ContentListCard({
               ) : null}
             </div>
             {badge ? (
-              <span className="shrink-0 rounded-md bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+              <span className="shrink-0 rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
                 {badge}
               </span>
             ) : null}
@@ -82,7 +82,7 @@ export function ContentListCard({
             </p>
           ) : null}
           {meta ? (
-            <p className="mt-2 text-[10px] font-semibold text-muted">{meta}</p>
+            <p className="mt-2 text-2xs font-semibold text-muted">{meta}</p>
           ) : null}
         </div>
       </div>

@@ -46,7 +46,7 @@ export default async function ArtistSeriesPage({
         backHref={profile.href}
         title="시리즈"
       />
-      <main className="pb-[96px]">
+      <main className="pb-24">
         <section className="bg-white px-6 pb-5 pt-5">
           <Link className="flex min-w-0 items-center gap-3" href={profile.href}>
             <ProfileAvatar size={40} />
@@ -54,7 +54,7 @@ export default async function ArtistSeriesPage({
               <h1 className="truncate text-base font-semibold text-black">
                 {profile.displayName}
               </h1>
-              <p className="mt-1 text-xs font-medium text-[#929aa8]">
+              <p className="mt-1 text-xs font-medium text-muted">
                 @{profile.username} · 시리즈 {seriesList.length}개
               </p>
             </div>
@@ -73,7 +73,7 @@ export default async function ArtistSeriesPage({
               ))}
             </div>
           ) : (
-            <div className="rounded-[6px] border border-[#e5e7eb] bg-[#f9fafb] p-4">
+            <div className="rounded-md border border-line bg-panel p-4">
               <p className="text-sm font-semibold text-black">
                 공개된 시리즈가 없습니다.
               </p>

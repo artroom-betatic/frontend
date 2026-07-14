@@ -51,7 +51,7 @@ export function CreatorArtworksClient() {
   }, [toastMessage]);
 
   return (
-    <main className="px-6 pb-[96px] pt-5">
+    <main className="px-6 pb-24 pt-5">
       <p className="text-sm font-medium leading-6 text-subtle">
         내가 등록했거나 판매 준비 중인 작품을 확인합니다.
       </p>
@@ -60,7 +60,7 @@ export function CreatorArtworksClient() {
         {summary.map((item) => (
           <UiCard className="bg-white p-3 text-center" key={item.label}>
             <p className="text-lg font-bold text-foreground">{item.value}</p>
-            <p className="mt-1 text-[10px] text-muted">{item.label}</p>
+            <p className="mt-1 text-2xs text-muted">{item.label}</p>
           </UiCard>
         ))}
       </div>

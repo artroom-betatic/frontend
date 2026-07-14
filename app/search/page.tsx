@@ -13,14 +13,14 @@ export const metadata: Metadata = {
 
 function SearchFallback() {
   return (
-    <main className="px-6 pb-[96px] pt-5">
+    <main className="px-6 pb-24 pt-5">
       <FigmaInput
         className="w-full"
         disabled
         kind="search"
         placeholder="유저, 작품, 피드 검색"
       />
-      <div className="mt-4 flex gap-[6px]">
+      <div className="mt-4 flex gap-1.5">
         <FigmaTag active>전체</FigmaTag>
         <FigmaTag>#판타지</FigmaTag>
         <FigmaTag>#커미션</FigmaTag>
@@ -30,10 +30,10 @@ function SearchFallback() {
         {[0, 1, 2].map((item) => (
           <UiCard key={item}>
             <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-full bg-[#e5e7eb]" />
+              <div className="h-11 w-11 rounded-full bg-line" />
               <div className="flex-1">
-                <div className="h-3 w-28 rounded-full bg-[#e5e7eb]" />
-                <div className="mt-3 h-3 w-40 rounded-full bg-[#eef0f3]" />
+                <div className="h-3 w-28 rounded-full bg-line" />
+                <div className="mt-3 h-3 w-40 rounded-full bg-background" />
               </div>
             </div>
           </UiCard>

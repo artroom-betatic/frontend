@@ -115,7 +115,7 @@ export function NotificationSettingsClient({
         </ActionButton>
       </div>
       {statusMessage ? (
-        <p className="mt-4 text-xs font-medium text-[#307cff]">{statusMessage}</p>
+        <p className="mt-4 text-xs font-medium text-primary">{statusMessage}</p>
       ) : null}
     </>
   );

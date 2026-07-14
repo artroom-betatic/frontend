@@ -12,9 +12,13 @@ export type ContentDisplayMode =
   | "artwork"
   | "commission"
   | "membership";
+export type EngagementCountDisplayMode = "hide" | "show";
+export type AccountVisibilityMode = "private" | "public";
 
 export type AppSettings = {
+  accountVisibility: AccountVisibilityMode;
   contentDisplay: ContentDisplayMode;
+  engagementCountDisplay: EngagementCountDisplayMode;
   themeMode: AppThemeMode;
 };
 
@@ -22,7 +26,9 @@ export const APP_SETTINGS_STORAGE_KEY = "artroom:app-settings";
 export const APP_SETTINGS_UPDATED_EVENT = "artroom:app-settings-updated";
 
 export const defaultAppSettings: AppSettings = {
+  accountVisibility: "public",
   contentDisplay: "balanced",
+  engagementCountDisplay: "show",
   themeMode: "system",
 };
 
@@ -31,6 +37,7 @@ const themeTokenSets = {
     "--background": "#0d1117",
     "--danger": "#f87171",
     "--foreground": "#f3f4f6",
+    "--inactive": "#596273",
     "--line": "#303847",
     "--muted": "#a5adba",
     "--panel": "#171c24",
@@ -41,6 +48,7 @@ const themeTokenSets = {
     "--background": "#eef0f3",
     "--danger": "#fca5a5",
     "--foreground": "#1f2937",
+    "--inactive": "#d0d5dd",
     "--line": "#e5e7eb",
     "--muted": "#929aa8",
     "--panel": "#f9fafb",
@@ -98,12 +106,54 @@ export const contentDisplayOptions = [
   label: string;
 }[];
 
+export const engagementCountDisplayOptions = [
+  {
+    description: "내가 올린 피드의 좋아요 수, 댓글 수를 보여줍니다.",
+    id: "show",
+    label: "표시",
+  },
+  {
+    description: "내가 올린 피드에서 좋아요 수와 댓글 수 숫자를 숨깁니다.",
+    id: "hide",
+    label: "숨김",
+  },
+] satisfies {
+  description: string;
+  id: EngagementCountDisplayMode;
+  label: string;
+}[];
+
+export const accountVisibilityOptions = [
+  {
+    description: "프로필과 게시물을 다른 사용자가 볼 수 있는 상태입니다.",
+    id: "public",
+    label: "공개",
+  },
+  {
+    description: "프로필 접근을 제한하는 비공개 상태로 표시합니다.",
+    id: "private",
+    label: "비공개",
+  },
+] satisfies {
+  description: string;
+  id: AccountVisibilityMode;
+  label: string;
+}[];
+
 const themeModes = new Set<AppThemeMode>(["system", "light", "dark"]);
 const contentDisplayModes = new Set<ContentDisplayMode>([
   "balanced",
   "artwork",
   "commission",
   "membership",
+]);
+const engagementCountDisplayModes = new Set<EngagementCountDisplayMode>([
+  "hide",
+  "show",
+]);
+const accountVisibilityModes = new Set<AccountVisibilityMode>([
+  "private",
+  "public",
 ]);
 
 const contentDisplayProfiles: Record<
@@ -187,9 +237,21 @@ function normalizeAppSettings(value: unknown): AppSettings {
   )
     ? (value.contentDisplay as ContentDisplayMode)
     : defaultAppSettings.contentDisplay;
+  const engagementCountDisplay = engagementCountDisplayModes.has(
+    value.engagementCountDisplay as EngagementCountDisplayMode,
+  )
+    ? (value.engagementCountDisplay as EngagementCountDisplayMode)
+    : defaultAppSettings.engagementCountDisplay;
+  const accountVisibility = accountVisibilityModes.has(
+    value.accountVisibility as AccountVisibilityMode,
+  )
+    ? (value.accountVisibility as AccountVisibilityMode)
+    : defaultAppSettings.accountVisibility;
 
   return {
+    accountVisibility,
     contentDisplay,
+    engagementCountDisplay,
     themeMode,
   };
 }
@@ -361,6 +423,7 @@ function getFeedPostContentDisplayScore(
       post.artist.username,
       post.body,
       post.imageAlt,
+      post.tags.join(" "),
       post.imageSlides?.map((slide) => slide.imageAlt).join(" ") ?? "",
     ].join(" "),
   );
