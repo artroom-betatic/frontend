@@ -7,8 +7,8 @@ import { ArtistActions } from "@/components/artist-actions";
 import { BottomNav } from "@/components/bottom-nav";
 import { ContentListCard } from "@/components/content-list-card";
 import { CreatorCommissionPublicCard } from "@/components/creator-commission-public-card";
-import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
+import { ProfileBioText } from "@/components/profile-bio-text";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { SeriesCard } from "@/components/series-card";
 import { UiCard } from "@/components/ui-card";
@@ -18,6 +18,7 @@ import {
   getArtistSeries,
 } from "@/lib/catalog-data";
 import { getArtistResource } from "@/lib/server-data";
+import { getTagSearchHref } from "@/lib/tag-search";
 
 type ArtistPageProps = {
   params: Promise<{ username: string }>;
@@ -93,11 +94,21 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
           </div>
 
           <p className="mt-5 text-sm font-semibold text-black">{profile.coverTitle}</p>
-          <p className="mt-3 text-xs leading-5 text-foreground">{profile.bio}</p>
+          <ProfileBioText
+            className="mt-3 text-xs leading-5 text-foreground"
+            fallbackBio={profile.bio}
+            username={profile.username}
+          />
 
           <div className="mt-4 flex flex-wrap gap-1.5">
             {profile.tags.map((tag) => (
-              <FigmaTag key={tag}>{tag}</FigmaTag>
+              <Link
+                className="flex min-h-7 items-center justify-center rounded-md bg-panel px-2 py-1.5 text-sm font-semibold leading-none text-subtle"
+                href={getTagSearchHref(tag)}
+                key={tag}
+              >
+                {tag}
+              </Link>
             ))}
           </div>
 

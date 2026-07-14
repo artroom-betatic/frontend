@@ -2,14 +2,18 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
+  accountVisibilityOptions,
   contentDisplayOptions,
   defaultAppSettings,
+  engagementCountDisplayOptions,
   readAppSettings,
   subscribeAppSettingsChange,
   themeModeOptions,
   updateAppSettings,
+  type AccountVisibilityMode,
   type AppThemeMode,
   type ContentDisplayMode,
+  type EngagementCountDisplayMode,
 } from "@/lib/app-settings";
 import { ScreenSection } from "./screen-section";
 import {
@@ -77,6 +81,20 @@ export function AppSettingsClient() {
       ) ?? contentDisplayOptions[0],
     [settings.contentDisplay],
   );
+  const selectedEngagementCountDisplayOption = useMemo(
+    () =>
+      engagementCountDisplayOptions.find(
+        (option) => option.id === settings.engagementCountDisplay,
+      ) ?? engagementCountDisplayOptions[0],
+    [settings.engagementCountDisplay],
+  );
+  const selectedAccountVisibilityOption = useMemo(
+    () =>
+      accountVisibilityOptions.find(
+        (option) => option.id === settings.accountVisibility,
+      ) ?? accountVisibilityOptions[0],
+    [settings.accountVisibility],
+  );
 
   const updateThemeMode = (themeMode: AppThemeMode) => {
     updateAppSettings({ themeMode });
@@ -86,6 +104,20 @@ export function AppSettingsClient() {
   const updateContentDisplay = (contentDisplay: ContentDisplayMode) => {
     updateAppSettings({ contentDisplay });
     setStatusMessage("콘텐츠 표시가 저장되었습니다.");
+  };
+
+  const updateEngagementCountDisplay = (
+    engagementCountDisplay: EngagementCountDisplayMode,
+  ) => {
+    updateAppSettings({ engagementCountDisplay });
+    setStatusMessage("좋아요/댓글 수 표시 설정이 저장되었습니다.");
+  };
+
+  const updateAccountVisibility = (
+    accountVisibility: AccountVisibilityMode,
+  ) => {
+    updateAppSettings({ accountVisibility });
+    setStatusMessage("계정 공개 범위가 저장되었습니다.");
   };
 
   return (
@@ -164,6 +196,90 @@ export function AppSettingsClient() {
                     }`}
                     key={option.id}
                     onClick={() => updateContentDisplay(option.id)}
+                    type="button"
+                  >
+                    <span className="block text-sm font-semibold text-foreground">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-subtle">
+                      {option.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </UiCard>
+
+          <UiCard className="bg-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-subtle">
+                  내 피드 좋아요/댓글 수
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {selectedEngagementCountDisplayOption.label}
+                </p>
+              </div>
+              <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
+                내 피드
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {engagementCountDisplayOptions.map((option) => {
+                const active = settings.engagementCountDisplay === option.id;
+
+                return (
+                  <button
+                    aria-pressed={active}
+                    className={`rounded-md border px-3 py-3 text-left transition-colors ${
+                      active
+                        ? "border-primary bg-primary/10"
+                        : "border-line bg-panel"
+                    }`}
+                    key={option.id}
+                    onClick={() => updateEngagementCountDisplay(option.id)}
+                    type="button"
+                  >
+                    <span className="block text-sm font-semibold text-foreground">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-subtle">
+                      {option.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </UiCard>
+
+          <UiCard className="bg-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-subtle">계정 공개 범위</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {selectedAccountVisibilityOption.label}
+                </p>
+              </div>
+              <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
+                프로필
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {accountVisibilityOptions.map((option) => {
+                const active = settings.accountVisibility === option.id;
+
+                return (
+                  <button
+                    aria-pressed={active}
+                    className={`rounded-md border px-3 py-3 text-left transition-colors ${
+                      active
+                        ? "border-primary bg-primary/10"
+                        : "border-line bg-panel"
+                    }`}
+                    key={option.id}
+                    onClick={() => updateAccountVisibility(option.id)}
                     type="button"
                   >
                     <span className="block text-sm font-semibold text-foreground">

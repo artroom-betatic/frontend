@@ -7,23 +7,46 @@ export type StoredFeedComment = {
 
 export type FeedPostInterest = "interested" | "notInterested";
 
+export type FeedCommentSettings = {
+  commentsClosed: boolean;
+  pinnedCommentKeys: string[];
+};
+
+export type UserReport = {
+  createdAt: string;
+  reason: string;
+};
+
 export type UserActionSnapshot = {
+  blockedUsernames: string[];
   bookmarkedPostIds: string[];
+  feedCommentSettingsByPostId: Record<string, FeedCommentSettings>;
   commentsByPostId: Record<string, StoredFeedComment[]>;
   feedInterestByPostId: Record<string, FeedPostInterest>;
+  feedReportsByPostId: Record<string, UserReport>;
   followingByUsername: Record<string, boolean>;
   likedPostIds: string[];
+  userReportsByUsername: Record<string, UserReport>;
 };
 
 export const USER_ACTIONS_STORAGE_KEY = "artroom:user-actions";
 export const USER_ACTIONS_UPDATED_EVENT = "artroom:user-actions-updated";
 
 export const defaultUserActionSnapshot: UserActionSnapshot = {
+  blockedUsernames: [],
   bookmarkedPostIds: [],
+  feedCommentSettingsByPostId: {},
   commentsByPostId: {},
   feedInterestByPostId: {},
+  feedReportsByPostId: {},
   followingByUsername: {},
   likedPostIds: [],
+  userReportsByUsername: {},
+};
+
+const defaultFeedCommentSettings: FeedCommentSettings = {
+  commentsClosed: false,
+  pinnedCommentKeys: [],
 };
 
 let cachedUserActionsString: string | null = null;
@@ -93,6 +116,64 @@ function normalizeFollowingByUsername(value: unknown): Record<string, boolean> {
   );
 }
 
+function normalizeReportMap(value: unknown): Record<string, UserReport> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, report]): [string, UserReport] | null => {
+        if (!isRecord(report)) {
+          return null;
+        }
+
+        return [
+          key,
+          {
+            createdAt:
+              typeof report.createdAt === "string"
+                ? report.createdAt
+                : new Date().toISOString(),
+            reason: typeof report.reason === "string" ? report.reason : "신고",
+          },
+        ];
+      })
+      .filter((entry): entry is [string, UserReport] => entry !== null),
+  );
+}
+
+function normalizeFeedCommentSettingsByPostId(
+  value: unknown,
+): Record<string, FeedCommentSettings> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([postId, settings]) => {
+      if (!isRecord(settings)) {
+        return [postId, defaultFeedCommentSettings];
+      }
+
+      return [
+        postId,
+        {
+          commentsClosed: settings.commentsClosed === true,
+          pinnedCommentKeys: Array.from(
+            new Set([
+              ...(typeof settings.pinnedCommentKey === "string"
+                ? [settings.pinnedCommentKey]
+                : []),
+              ...normalizeStringList(settings.pinnedCommentKeys),
+            ]),
+          ),
+        },
+      ];
+    }),
+  );
+}
+
 function normalizeFeedInterestByPostId(
   value: unknown,
 ): Record<string, FeedPostInterest> {
@@ -114,13 +195,19 @@ function normalizeUserActions(value: unknown): UserActionSnapshot {
   }
 
   return {
+    blockedUsernames: normalizeStringList(value.blockedUsernames),
     bookmarkedPostIds: normalizeStringList(value.bookmarkedPostIds),
     commentsByPostId: normalizeCommentsByPostId(value.commentsByPostId),
+    feedCommentSettingsByPostId: normalizeFeedCommentSettingsByPostId(
+      value.feedCommentSettingsByPostId,
+    ),
     feedInterestByPostId: normalizeFeedInterestByPostId(
       value.feedInterestByPostId,
     ),
+    feedReportsByPostId: normalizeReportMap(value.feedReportsByPostId),
     followingByUsername: normalizeFollowingByUsername(value.followingByUsername),
     likedPostIds: normalizeStringList(value.likedPostIds),
+    userReportsByUsername: normalizeReportMap(value.userReportsByUsername),
   };
 }
 
@@ -217,6 +304,19 @@ export function getFeedPostInterest(
   return snapshot.feedInterestByPostId[postId] ?? null;
 }
 
+export function getFeedCommentSettings(
+  snapshot: UserActionSnapshot,
+  postId: string,
+  fallbackCommentsClosed = false,
+) {
+  return (
+    snapshot.feedCommentSettingsByPostId[postId] ?? {
+      ...defaultFeedCommentSettings,
+      commentsClosed: fallbackCommentsClosed,
+    }
+  );
+}
+
 export function getArtistFollowing(
   snapshot: UserActionSnapshot,
   username: string,
@@ -246,6 +346,52 @@ export function getFeedPostCommentCount(
   initialComments: number,
 ) {
   return initialComments + getStoredFeedComments(snapshot, postId).length;
+}
+
+export function getFeedCommentKey(comment: {
+  author: string;
+  body: string;
+  id?: string;
+  time: string;
+}) {
+  return comment.id
+    ? `stored:${comment.id}`
+    : `base:${comment.author}:${comment.time}:${comment.body}`;
+}
+
+export function isFeedCommentPinned(
+  settings: FeedCommentSettings,
+  commentKey: string,
+) {
+  return settings.pinnedCommentKeys.includes(commentKey);
+}
+
+export function getFeedCommentPinnedIndex(
+  settings: FeedCommentSettings,
+  commentKey: string,
+) {
+  return settings.pinnedCommentKeys.indexOf(commentKey);
+}
+
+export function isUsernameBlocked(
+  snapshot: UserActionSnapshot,
+  username: string,
+) {
+  return snapshot.blockedUsernames.includes(username);
+}
+
+export function isFeedPostReported(
+  snapshot: UserActionSnapshot,
+  postId: string,
+) {
+  return Boolean(snapshot.feedReportsByPostId[postId]);
+}
+
+export function isUsernameReported(
+  snapshot: UserActionSnapshot,
+  username: string,
+) {
+  return Boolean(snapshot.userReportsByUsername[username]);
 }
 
 export function toggleFeedPostLike(postId: string) {
@@ -282,12 +428,121 @@ export function setFeedPostInterest(
   });
 }
 
+export function setFeedCommentsClosed(postId: string, commentsClosed: boolean) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    feedCommentSettingsByPostId: {
+      ...snapshot.feedCommentSettingsByPostId,
+      [postId]: {
+        ...getFeedCommentSettings(snapshot, postId),
+        commentsClosed,
+      },
+    },
+  }));
+}
+
+export function setPinnedFeedComment(
+  postId: string,
+  pinnedCommentKey: string | null,
+) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    feedCommentSettingsByPostId: {
+      ...snapshot.feedCommentSettingsByPostId,
+      [postId]: {
+        ...getFeedCommentSettings(snapshot, postId),
+        pinnedCommentKeys: pinnedCommentKey ? [pinnedCommentKey] : [],
+      },
+    },
+  }));
+}
+
+export function togglePinnedFeedComment(
+  postId: string,
+  commentKey: string,
+  fallbackCommentsClosed = false,
+) {
+  updateUserActionSnapshot((snapshot) => {
+    const currentSettings = getFeedCommentSettings(
+      snapshot,
+      postId,
+      fallbackCommentsClosed,
+    );
+    const pinnedCommentKeys = currentSettings.pinnedCommentKeys.includes(
+      commentKey,
+    )
+      ? currentSettings.pinnedCommentKeys.filter(
+          (currentCommentKey) => currentCommentKey !== commentKey,
+        )
+      : [
+          commentKey,
+          ...currentSettings.pinnedCommentKeys.filter(
+            (currentCommentKey) => currentCommentKey !== commentKey,
+          ),
+        ];
+
+    return {
+      ...snapshot,
+      feedCommentSettingsByPostId: {
+        ...snapshot.feedCommentSettingsByPostId,
+        [postId]: {
+          ...currentSettings,
+          pinnedCommentKeys,
+        },
+      },
+    };
+  });
+}
+
 export function setArtistFollowing(username: string, following: boolean) {
   updateUserActionSnapshot((snapshot) => ({
     ...snapshot,
     followingByUsername: {
       ...snapshot.followingByUsername,
       [username]: following,
+    },
+  }));
+}
+
+export function setUsernameBlocked(username: string, blocked: boolean) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    blockedUsernames: blocked
+      ? Array.from(new Set([...snapshot.blockedUsernames, username]))
+      : snapshot.blockedUsernames.filter(
+          (currentUsername) => currentUsername !== username,
+        ),
+    followingByUsername: blocked
+      ? {
+          ...snapshot.followingByUsername,
+          [username]: false,
+        }
+      : snapshot.followingByUsername,
+  }));
+}
+
+export function reportFeedPost(postId: string, reason = "부적절한 피드") {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    feedReportsByPostId: {
+      ...snapshot.feedReportsByPostId,
+      [postId]: {
+        createdAt: new Date().toISOString(),
+        reason,
+      },
+    },
+  }));
+}
+
+export function reportUsername(username: string, reason = "부적절한 계정") {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    userReportsByUsername: {
+      ...snapshot.userReportsByUsername,
+      [username]: {
+        createdAt: new Date().toISOString(),
+        reason,
+      },
     },
   }));
 }

@@ -33,7 +33,7 @@ function feedTags(text: string): SearchFilterTagId[] {
 
 const searchResults: SearchResult[] = [
   ...getArtistProfiles().map<SearchResult>((profile) => ({
-    badges: [profile.membershipLabel],
+    badges: [profile.membershipLabel, ...profile.tags],
     description: profile.bio,
     href: profile.href,
     id: `user-${profile.username}`,
@@ -67,14 +67,14 @@ const searchResults: SearchResult[] = [
   })),
   ...getCatalogSearchResults(),
   ...getFeedPosts().map<SearchResult>((post) => ({
-    badges: [post.createdAtLabel],
+    badges: [post.createdAtLabel, ...post.tags],
     description: post.body,
     href: post.href,
     id: `feed-${post.id}`,
     imageAlt: post.imageAlt,
     imageSrc: post.imageSrc,
     subtitle: `@${post.artist.username}`,
-    tags: feedTags(`${post.body} ${post.imageAlt}`),
+    tags: feedTags(`${post.body} ${post.imageAlt} ${post.tags.join(" ")}`),
     title: post.artist.displayName,
     type: "feed",
   })),

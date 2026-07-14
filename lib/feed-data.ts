@@ -139,6 +139,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: hamsterMonoImageSrc,
     likedBy: "user_123님 외 546명이 좋아합니다",
     likes: 547,
+    tags: ["#판타지", "#작업일지"],
   },
   {
     artist: summary("nori_n_sullgi"),
@@ -151,6 +152,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: animeDialogueImageSrc,
     likedBy: "inme__diary님 외 312명이 좋아합니다",
     likes: 313,
+    tags: ["#멤버십", "#러프"],
   },
   {
     artist: summary("inme__diary"),
@@ -163,6 +165,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: hamsterRedImageSrc,
     likedBy: "naronaro.i님 외 221명이 좋아합니다",
     likes: 222,
+    tags: ["#커미션", "#프로필아이콘"],
   },
   {
     artist: summary("lechointheworld"),
@@ -175,6 +178,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: hamsterMonoImageSrc,
     likedBy: "blue_studio님 외 476명이 좋아합니다",
     likes: 477,
+    tags: ["#Ebook", "#세계관"],
   },
   {
     artist: summary("naronaro.i"),
@@ -187,6 +191,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: animeDialogueImageSrc,
     likedBy: "user_123님 외 164명이 좋아합니다",
     likes: 165,
+    tags: ["#드로잉", "#러프"],
   },
   {
     artist: summary("blue_studio"),
@@ -199,6 +204,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: postImageSrc,
     likedBy: "lechointheworld님 외 389명이 좋아합니다",
     likes: 390,
+    tags: ["#배경", "#커미션"],
   },
   {
     artist: summary("user_123"),
@@ -211,6 +217,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: hamsterRedImageSrc,
     likedBy: "nori_n_sullgi님 외 295명이 좋아합니다",
     likes: 296,
+    tags: ["#멤버십", "#튜토리얼"],
   },
   {
     artist: summary("inme__diary"),
@@ -223,6 +230,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: hamsterRedImageSrc,
     likedBy: "naronaro.i님 외 188명이 좋아합니다",
     likes: 189,
+    tags: ["#굿즈", "#캐릭터"],
   },
   {
     artist: summary("lechointheworld"),
@@ -235,6 +243,7 @@ const feedPosts: FeedPost[] = [
     imageSrc: animeDialogueImageSrc,
     likedBy: "blue_studio님 외 254명이 좋아합니다",
     likes: 255,
+    tags: ["#만화", "#콘티"],
   },
 ].map((post) => ({
   ...post,

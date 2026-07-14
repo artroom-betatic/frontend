@@ -11,7 +11,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { comments } from "@/lib/artroom-data";
+import { comments, type Comment } from "@/lib/artroom-data";
 import {
   contentDisplayOptions,
   defaultAppSettings,
@@ -21,6 +21,14 @@ import {
 } from "@/lib/app-settings";
 import { fetchFeedPage } from "@/lib/feed-client";
 import type { FeedPost } from "@/lib/feed-types";
+import {
+  getLocalFeedPostsServerSnapshot,
+  readLocalFeedPosts,
+  subscribeLocalFeedPostsChange,
+  toFeedPost,
+} from "@/lib/local-feed-posts";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
+import { getTagSearchHref } from "@/lib/tag-search";
 import { ActionButton } from "./action-button";
 import { AssetIcon } from "./asset-icon";
 import { BottomNav } from "./bottom-nav";
@@ -33,14 +41,20 @@ import {
   addFeedComment,
   defaultUserActionSnapshot,
   getArtistFollowing,
+  getFeedCommentKey,
+  getFeedCommentPinnedIndex,
+  getFeedCommentSettings,
   getFeedPostCommentCount,
   getFeedPostLikeCount,
   getStoredFeedComments,
+  isFeedCommentPinned,
+  isUsernameBlocked,
   isFeedPostBookmarked,
   isFeedPostLiked,
   readUserActionSnapshot,
   setArtistFollowing,
   subscribeUserActionsChange,
+  togglePinnedFeedComment,
   toggleFeedPostBookmark,
   toggleFeedPostLike,
 } from "@/lib/user-actions";
@@ -52,35 +66,71 @@ const SLIDE_SWIPE_VERTICAL_TOLERANCE_PX = 80;
 
 type FeedStatus = "error" | "loading" | "loadingMore" | "ready";
 
+type CommentDisplayRow = Comment & {
+  commentKey: string;
+  pinned: boolean;
+  pinnedIndex: number;
+  rowIndex: number;
+};
+
 function CommentRow({
   author,
   body,
+  canPin,
+  canReply,
+  onPin,
   onReply,
+  pinned,
   time,
 }: {
   author: string;
   body: string;
+  canPin: boolean;
+  canReply: boolean;
+  onPin: () => void;
   onReply: (author: string) => void;
+  pinned: boolean;
   time: string;
 }) {
   return (
-    <article className="flex items-center justify-between gap-4 px-4 py-2.5">
+    <article className="flex items-start justify-between gap-4 px-4 py-2.5">
       <div className="flex min-w-0 items-start gap-1.5">
         <ProfileAvatar size={40} />
         <div className="min-w-0">
-          <p className="text-3xs font-semibold leading-none text-black">
-            {author} <span className="font-normal text-muted/70">{time}</span>
+          <p className="flex flex-wrap items-center gap-1 text-3xs font-semibold leading-none text-black">
+            <span>{author}</span>
+            <span className="font-normal text-muted/70">{time}</span>
+            {pinned ? (
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-primary">
+                고정됨
+              </span>
+            ) : null}
           </p>
           <p className="mt-1 truncate text-2xs font-medium leading-3 text-black">
             {body}
           </p>
-          <button
-            className="mt-1 text-2xs font-semibold leading-3 text-muted/70"
-            onClick={() => onReply(author)}
-            type="button"
-          >
-            답글 달기
-          </button>
+          {canPin || canReply ? (
+            <div className="mt-1 flex flex-wrap gap-2">
+              {canReply ? (
+                <button
+                  className="text-2xs font-semibold leading-3 text-muted/70"
+                  onClick={() => onReply(author)}
+                  type="button"
+                >
+                  답글 달기
+                </button>
+              ) : null}
+              {canPin ? (
+                <button
+                  className="text-2xs font-semibold leading-3 text-primary"
+                  onClick={onPin}
+                  type="button"
+                >
+                  {pinned ? "고정 해제" : "댓글 고정"}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
       <AssetIcon className="h-4 w-4 shrink-0 opacity-30" name="heart-small" />
@@ -101,10 +151,46 @@ function CommentsSheet({
     () => defaultUserActionSnapshot,
   );
   const [draftComment, setDraftComment] = useState("");
-  const commentRows = [
-    ...getStoredFeedComments(actionSnapshot, post.id),
-    ...comments,
-  ];
+  const commentSettings = getFeedCommentSettings(
+    actionSnapshot,
+    post.id,
+    post.commentsClosed === true,
+  );
+  const commentsClosed = commentSettings.commentsClosed;
+  const isPostOwner = post.artist.username === MY_PROFILE_USERNAME;
+  const commentRows = useMemo<CommentDisplayRow[]>(() => {
+    const baseComments = post.id.startsWith("local-feed-") ? [] : comments;
+    const rows = [
+      ...getStoredFeedComments(actionSnapshot, post.id),
+      ...baseComments,
+    ].map((comment, rowIndex) => {
+      const commentKey = getFeedCommentKey(comment);
+      const pinnedIndex = getFeedCommentPinnedIndex(
+        commentSettings,
+        commentKey,
+      );
+
+      return {
+        ...comment,
+        commentKey,
+        pinned: isFeedCommentPinned(commentSettings, commentKey),
+        pinnedIndex,
+        rowIndex,
+      };
+    });
+
+    return rows.sort((left, right) => {
+      if (left.pinned && right.pinned) {
+        return left.pinnedIndex - right.pinnedIndex;
+      }
+
+      if (left.pinned || right.pinned) {
+        return left.pinned ? -1 : 1;
+      }
+
+      return left.rowIndex - right.rowIndex;
+    });
+  }, [actionSnapshot, commentSettings, post.id]);
 
   const submitComment = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -115,9 +201,17 @@ function CommentsSheet({
       return;
     }
 
+    if (commentsClosed) {
+      return;
+    }
+
     addFeedComment(post.id, body);
     setDraftComment("");
   };
+
+  if (commentsClosed && !isPostOwner) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-40 mx-auto w-full max-w-app bg-black/50">
@@ -129,38 +223,60 @@ function CommentsSheet({
       />
       <section className="absolute bottom-0 left-0 z-10 h-comments-sheet w-full overflow-hidden rounded-t-sheet bg-white">
         <div className="mx-auto mt-4 h-1 w-10 rounded-full bg-muted/70" />
-        <h2 className="mt-3 text-center text-xs font-medium text-black">댓글</h2>
+        <div className="mt-3 flex items-center justify-between gap-3 px-4">
+          <h2 className="text-xs font-medium text-black">댓글</h2>
+          {isPostOwner && commentsClosed ? (
+            <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
+              댓글 막힘
+            </span>
+          ) : null}
+        </div>
         <div className="mt-6 max-h-80 overflow-y-auto">
-          {commentRows.map((comment, index) => (
+          {commentRows.map((comment) => (
             <CommentRow
               {...comment}
-              key={`${comment.author}-${
-                "id" in comment ? comment.id : comment.body
-              }-${index}`}
+              canPin={isPostOwner}
+              canReply={!commentsClosed}
+              key={`${comment.author}-${comment.commentKey}`}
+              onPin={() =>
+                togglePinnedFeedComment(
+                  post.id,
+                  comment.commentKey,
+                  post.commentsClosed === true,
+                )
+              }
               onReply={(author) => setDraftComment(`@${author} `)}
             />
           ))}
         </div>
-        <form
-          className="absolute bottom-0 left-0 flex h-bottom-nav w-full items-center gap-2 border-t border-muted/70 bg-white px-4"
-          onSubmit={submitComment}
-        >
-          <ProfileAvatar size={30} />
-          <input
-            aria-label="댓글 입력"
-            className="flex h-7.5 min-w-0 flex-1 items-center rounded-full border border-muted/70 px-3.5 text-xs font-medium text-black outline-none placeholder:text-muted"
-            onChange={(event) => setDraftComment(event.currentTarget.value)}
-            placeholder="대화 참여하기..."
-            value={draftComment}
-          />
-          <button
-            className="h-7.5 rounded-md bg-primary px-3 text-xs font-medium text-white disabled:bg-line"
-            disabled={!draftComment.trim()}
-            type="submit"
+        {commentsClosed ? (
+          <div className="absolute bottom-0 left-0 flex h-bottom-nav w-full items-center border-t border-muted/70 bg-white px-4">
+            <p className="text-xs font-medium text-muted">
+              이 피드의 댓글창이 닫혀 있습니다.
+            </p>
+          </div>
+        ) : (
+          <form
+            className="absolute bottom-0 left-0 flex h-bottom-nav w-full items-center gap-2 border-t border-muted/70 bg-white px-4"
+            onSubmit={submitComment}
           >
-            등록
-          </button>
-        </form>
+            <ProfileAvatar size={30} />
+            <input
+              aria-label="댓글 입력"
+              className="flex h-7.5 min-w-0 flex-1 items-center rounded-full border border-muted/70 px-3.5 text-xs font-medium text-black outline-none placeholder:text-muted"
+              onChange={(event) => setDraftComment(event.currentTarget.value)}
+              placeholder="대화 참여하기..."
+              value={draftComment}
+            />
+            <button
+              className="h-7.5 rounded-md bg-primary px-3 text-xs font-medium text-white disabled:bg-line"
+              disabled={!draftComment.trim()}
+              type="submit"
+            >
+              등록
+            </button>
+          </form>
+        )}
       </section>
     </div>
   );
@@ -189,10 +305,12 @@ function FeedPostArticle({
   index,
   onOpenComments,
   post,
+  showEngagementCounts,
 }: {
   index: number;
   onOpenComments: () => void;
   post: FeedPost;
+  showEngagementCounts: boolean;
 }) {
   const actionSnapshot = useSyncExternalStore(
     subscribeUserActionsChange,
@@ -218,6 +336,13 @@ function FeedPostArticle({
     post.artist.isFollowing,
   );
   const liked = isFeedPostLiked(actionSnapshot, post.id);
+  const commentSettings = getFeedCommentSettings(
+    actionSnapshot,
+    post.id,
+    post.commentsClosed === true,
+  );
+  const isPostOwner = post.artist.username === MY_PROFILE_USERNAME;
+  const canOpenComments = isPostOwner || !commentSettings.commentsClosed;
   const likes = getFeedPostLikeCount(actionSnapshot, post.id, post.likes);
   const commentCount = getFeedPostCommentCount(
     actionSnapshot,
@@ -317,7 +442,7 @@ function FeedPostArticle({
     : "pointer-events-none opacity-0";
 
   return (
-    <article className="border-b border-white bg-white">
+    <article className="bg-white">
       <div className="flex h-15.5 items-center px-3.5 py-4">
         <Link className="flex min-w-0 flex-1 items-center" href={post.artist.href}>
           <ProfileAvatar className="mx-2" size={32} />
@@ -340,7 +465,10 @@ function FeedPostArticle({
           >
             {isFollowing ? "팔로잉" : "팔로우"}
           </ActionButton>
-          <FeedInterestMenu postId={post.id} />
+          <FeedInterestMenu
+            artistUsername={post.artist.username}
+            postId={post.id}
+          />
         </div>
       </div>
 
@@ -399,16 +527,24 @@ function FeedPostArticle({
               kind="heart"
               onClick={() => toggleFeedPostLike(post.id)}
             />
-            <span className="text-xs font-bold text-black">{likes}</span>
+            {showEngagementCounts ? (
+              <span className="text-xs font-bold text-black">{likes}</span>
+            ) : null}
           </div>
-          <div className="ml-6 flex items-center gap-1">
-            <PostActionIcon
-              aria-label="댓글 보기"
-              kind="message"
-              onClick={onOpenComments}
-            />
-            <span className="text-xs font-bold text-black">{commentCount}</span>
-          </div>
+          {canOpenComments ? (
+            <div className="ml-6 flex items-center gap-1">
+              <PostActionIcon
+                aria-label="댓글 보기"
+                kind="message"
+                onClick={onOpenComments}
+              />
+              {showEngagementCounts ? (
+                <span className="text-xs font-bold text-black">
+                  {commentCount}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           <ShareButton
             className="ml-6"
             shareText={post.body}
@@ -425,19 +561,34 @@ function FeedPostArticle({
           />
         </div>
         <div className="mt-1">
-          <p className="flex items-center text-2xs leading-3 text-black">
-            <span className="relative mr-2 flex w-7 shrink-0">
-              <ProfileAvatar className="border border-white" size={22} />
-              <ProfileAvatar className="-ml-4 border border-white" size={22} />
-            </span>
-            <span>{post.likedBy}</span>
-          </p>
+          {showEngagementCounts ? (
+            <p className="flex items-center text-2xs leading-3 text-black">
+              <span className="relative mr-2 flex w-7 shrink-0">
+                <ProfileAvatar className="border border-white" size={22} />
+                <ProfileAvatar className="-ml-4 border border-white" size={22} />
+              </span>
+              <span>{post.likedBy}</span>
+            </p>
+          ) : null}
           <p className="mt-2 text-2xs font-medium leading-3 text-black">
             <Link className="font-bold" href={post.artist.href}>
               {post.artist.username}
             </Link>{" "}
             <Link href={post.href}>{post.body}</Link>
           </p>
+          {post.tags.length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {post.tags.map((tag) => (
+                <Link
+                  className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary"
+                  href={getTagSearchHref(tag)}
+                  key={tag}
+                >
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </article>
@@ -458,9 +609,26 @@ export function HomeFeed() {
     readAppSettings,
     () => defaultAppSettings,
   );
+  const actionSnapshot = useSyncExternalStore(
+    subscribeUserActionsChange,
+    readUserActionSnapshot,
+    () => defaultUserActionSnapshot,
+  );
+  const localFeedPosts = useSyncExternalStore(
+    subscribeLocalFeedPostsChange,
+    readLocalFeedPosts,
+    getLocalFeedPostsServerSnapshot,
+  );
+  const mergedPosts = useMemo(
+    () => [...localFeedPosts.map(toFeedPost), ...posts],
+    [localFeedPosts, posts],
+  );
   const displayedPosts = useMemo(
-    () => sortFeedPostsByContentDisplay(posts, appSettings.contentDisplay),
-    [appSettings.contentDisplay, posts],
+    () =>
+      sortFeedPostsByContentDisplay(mergedPosts, appSettings.contentDisplay).filter(
+        (post) => !isUsernameBlocked(actionSnapshot, post.artist.username),
+      ),
+    [actionSnapshot, appSettings.contentDisplay, mergedPosts],
   );
   const selectedContentDisplayOption = useMemo(
     () =>
@@ -563,11 +731,19 @@ export function HomeFeed() {
           <h1 className="text-sm font-bold tracking-normal text-black">
             Artroom
           </h1>
-          {appSettings.contentDisplay !== "balanced" ? (
-            <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
-              {selectedContentDisplayOption.label}
-            </span>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {appSettings.contentDisplay !== "balanced" ? (
+              <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
+                {selectedContentDisplayOption.label}
+              </span>
+            ) : null}
+            <Link
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white"
+              href="/feed/new"
+            >
+              새 피드
+            </Link>
+          </div>
         </header>
 
         {status === "loading" ? <FeedSkeleton /> : null}
@@ -578,8 +754,23 @@ export function HomeFeed() {
             key={post.id}
             onOpenComments={() => setCommentPost(post)}
             post={post}
+            showEngagementCounts={
+              post.artist.username !== MY_PROFILE_USERNAME ||
+              appSettings.engagementCountDisplay === "show"
+            }
           />
         ))}
+
+        {status === "ready" && posts.length > 0 && displayedPosts.length === 0 ? (
+          <div className="px-4 py-5">
+            <UiCard>
+              <p className="text-sm font-semibold">표시할 피드가 없습니다</p>
+              <p className="mt-2 text-xs leading-5 text-muted">
+                차단한 계정의 피드는 홈에서 숨겨집니다.
+              </p>
+            </UiCard>
+          </div>
+        ) : null}
 
         {status === "error" ? (
           <div className="px-4 py-5">

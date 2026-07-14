@@ -8,8 +8,25 @@ import {
   type SettingsListItemIconName,
 } from "@/components/settings-list-item";
 import { UiCard } from "@/components/ui-card";
-import { saveStoredProfileImage } from "@/lib/my-profile";
+import {
+  readStoredProfileBio,
+  saveStoredProfileBio,
+  saveStoredProfileImage,
+  subscribeProfileBioChange,
+} from "@/lib/my-profile";
 import type { ArtistProfile } from "@/lib/feed-types";
+import {
+  defaultAppSettings,
+  readAppSettings,
+  subscribeAppSettingsChange,
+  updateAppSettings,
+} from "@/lib/app-settings";
+import {
+  defaultUserActionSnapshot,
+  readUserActionSnapshot,
+  setUsernameBlocked,
+  subscribeUserActionsChange,
+} from "@/lib/user-actions";
 import {
   clearRouteToast,
   readRouteToast,
@@ -26,9 +43,10 @@ const myStats = [
 ];
 
 const fallbackProfile = {
+  bio: "감정선이 살아있는 캐릭터 일러스트와 판타지 세계관 작업을 올립니다.",
   followersLabel: "팔로워 0",
   username: "user_123",
-} satisfies Pick<ArtistProfile, "followersLabel" | "username">;
+} satisfies Pick<ArtistProfile, "bio" | "followersLabel" | "username">;
 
 const myCollectionItems = [
   {
@@ -65,7 +83,7 @@ const myCreationItems = [
 }[];
 
 type MyPageClientProps = {
-  profile: Pick<ArtistProfile, "followersLabel" | "username"> | null;
+  profile: Pick<ArtistProfile, "bio" | "followersLabel" | "username"> | null;
 };
 
 export function MyPageClient({ profile }: MyPageClientProps) {
@@ -73,12 +91,29 @@ export function MyPageClient({ profile }: MyPageClientProps) {
   const creatorMembershipStatus = useCreatorMembershipStatus();
   const myProfile = profile ?? fallbackProfile;
   const profileImageSrc = useProfileImage();
+  const appSettings = useSyncExternalStore(
+    subscribeAppSettingsChange,
+    readAppSettings,
+    () => defaultAppSettings,
+  );
+  const actionSnapshot = useSyncExternalStore(
+    subscribeUserActionsChange,
+    readUserActionSnapshot,
+    () => defaultUserActionSnapshot,
+  );
   const toastMessage = useSyncExternalStore(
     subscribeRouteToastChange,
     readRouteToast,
     () => "",
   );
   const [statusMessage, setStatusMessage] = useState("");
+  const [savedBio, setSavedBio] = useState(() =>
+    readStoredProfileBio(myProfile.bio),
+  );
+  const [bioDraft, setBioDraft] = useState(() =>
+    readStoredProfileBio(myProfile.bio),
+  );
+  const [editingBio, setEditingBio] = useState(false);
   const creatorMembershipItem = getCreatorMembershipMenuItem(
     creatorMembershipStatus,
   );
@@ -114,6 +149,38 @@ export function MyPageClient({ profile }: MyPageClientProps) {
     reader.readAsDataURL(file);
   };
 
+  const saveBio = () => {
+    saveStoredProfileBio(bioDraft);
+    const nextBio = readStoredProfileBio(myProfile.bio);
+
+    setSavedBio(nextBio);
+    setBioDraft(nextBio);
+    setEditingBio(false);
+    setStatusMessage("자기소개가 저장되었습니다.");
+  };
+
+  const startBioEdit = () => {
+    setBioDraft(savedBio);
+    setEditingBio(true);
+    setStatusMessage("");
+  };
+
+  const toggleAccountVisibility = () => {
+    const nextVisibility =
+      appSettings.accountVisibility === "public" ? "private" : "public";
+
+    updateAppSettings({ accountVisibility: nextVisibility });
+    setStatusMessage(
+      nextVisibility === "public"
+        ? "계정을 공개로 변경했습니다."
+        : "계정을 비공개로 변경했습니다.",
+    );
+  };
+  const unblockUsername = (username: string) => {
+    setUsernameBlocked(username, false);
+    setStatusMessage(`@${username} 차단을 해제했습니다.`);
+  };
+
   useEffect(() => {
     if (!toastMessage) {
       return;
@@ -123,6 +190,18 @@ export function MyPageClient({ profile }: MyPageClientProps) {
 
     return () => window.clearTimeout(timeoutId);
   }, [toastMessage]);
+
+  useEffect(() => {
+    const syncBio = () => {
+      const nextBio = readStoredProfileBio(myProfile.bio);
+
+      setSavedBio(nextBio);
+      setBioDraft(nextBio);
+    };
+
+    syncBio();
+    return subscribeProfileBioChange(syncBio);
+  }, [myProfile.bio]);
 
   return (
     <main className="px-6 pb-24 pt-5">
@@ -169,6 +248,101 @@ export function MyPageClient({ profile }: MyPageClientProps) {
           >
             이미지 변경
           </ActionButton>
+        </div>
+
+        <div className="mt-6 rounded-md px-1 py-3 transition-colors hover:bg-panel">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-base font-semibold leading-5 text-foreground">
+                자기소개
+              </p>
+              {!editingBio ? (
+                <p className="mt-1 whitespace-pre-wrap text-xs font-medium leading-5 text-subtle">
+                  {savedBio}
+                </p>
+              ) : null}
+            </div>
+            <div className="shrink-0">
+              {editingBio ? (
+                <span className="text-2xs font-medium text-muted">
+                  {bioDraft.length}/120
+                </span>
+              ) : (
+                <ActionButton onClick={startBioEdit} variant="secondary">
+                  수정
+                </ActionButton>
+              )}
+            </div>
+          </div>
+
+          {editingBio ? (
+            <>
+              <label className="sr-only" htmlFor="my-profile-bio">
+                자기소개 입력
+              </label>
+              <textarea
+                className="mt-3 min-h-24 w-full resize-none rounded-md border border-line bg-panel px-3 py-3 text-sm leading-6 text-foreground outline-none placeholder:text-muted focus:border-primary"
+                id="my-profile-bio"
+                maxLength={120}
+                onChange={(event) => setBioDraft(event.currentTarget.value)}
+                placeholder="프로필에 보여줄 자기소개를 작성하세요."
+                value={bioDraft}
+              />
+              <ActionButton className="mt-3 w-full" onClick={saveBio}>
+                저장
+              </ActionButton>
+            </>
+          ) : null}
+        </div>
+
+        <div className="mt-1 flex items-center justify-between gap-4 rounded-md px-1 py-3 transition-colors hover:bg-panel">
+          <div className="min-w-0">
+            <p className="text-base font-semibold leading-5 text-foreground">
+              계정 공개 범위
+            </p>
+            <p className="mt-1 text-xs font-medium leading-5 text-subtle">
+              현재 {appSettings.accountVisibility === "public" ? "공개" : "비공개"} 상태입니다.
+            </p>
+          </div>
+          <ActionButton onClick={toggleAccountVisibility} variant="secondary">
+            {appSettings.accountVisibility === "public" ? "비공개" : "공개"}
+          </ActionButton>
+        </div>
+
+        <div className="mt-1 rounded-md px-1 py-3 transition-colors hover:bg-panel">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-base font-semibold leading-5 text-foreground">
+                차단한 유저
+              </p>
+              <p className="mt-1 text-xs font-medium leading-5 text-subtle">
+                {actionSnapshot.blockedUsernames.length
+                  ? `${actionSnapshot.blockedUsernames.length}명을 차단 중입니다.`
+                  : "차단한 유저가 없습니다."}
+              </p>
+            </div>
+          </div>
+
+          {actionSnapshot.blockedUsernames.length ? (
+            <div className="mt-3 grid gap-1">
+              {actionSnapshot.blockedUsernames.map((username) => (
+                <div
+                  className="flex items-center justify-between gap-3 rounded-md px-2 py-2 transition-colors hover:bg-background"
+                  key={username}
+                >
+                  <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+                    @{username}
+                  </span>
+                  <ActionButton
+                    onClick={() => unblockUsername(username)}
+                    variant="secondary"
+                  >
+                    차단 해제
+                  </ActionButton>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {statusMessage ? (

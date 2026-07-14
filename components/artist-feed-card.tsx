@@ -1,7 +1,16 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import {
+  defaultAppSettings,
+  readAppSettings,
+  subscribeAppSettingsChange,
+} from "@/lib/app-settings";
 import type { FeedPost } from "@/lib/feed-types";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 
 type ArtistFeedCardProps = {
   imagePriority?: boolean;
@@ -12,6 +21,15 @@ export function ArtistFeedCard({
   imagePriority = false,
   post,
 }: ArtistFeedCardProps) {
+  const settings = useSyncExternalStore(
+    subscribeAppSettingsChange,
+    readAppSettings,
+    () => defaultAppSettings,
+  );
+  const showEngagementCounts =
+    post.artist.username !== MY_PROFILE_USERNAME ||
+    settings.engagementCountDisplay === "show";
+
   return (
     <Link
       aria-label={`${post.artist.displayName}의 피드 자세히 보기`}
@@ -43,9 +61,11 @@ export function ArtistFeedCard({
         <p className="line-clamp-3 text-xs font-medium leading-5 text-foreground">
           {post.body}
         </p>
-        <p className="mt-3 text-2xs font-semibold text-muted">
-          좋아요 {post.likes} · 댓글 {post.comments}
-        </p>
+        {showEngagementCounts ? (
+          <p className="mt-3 text-2xs font-semibold text-muted">
+            좋아요 {post.likes} · 댓글 {post.comments}
+          </p>
+        ) : null}
       </div>
     </Link>
   );

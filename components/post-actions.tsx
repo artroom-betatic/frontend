@@ -2,7 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 import {
+  defaultAppSettings,
+  readAppSettings,
+  subscribeAppSettingsChange,
+} from "@/lib/app-settings";
+import {
   defaultUserActionSnapshot,
+  getFeedCommentSettings,
   getFeedPostLikeCount,
   getFeedPostCommentCount,
   isFeedPostBookmarked,
@@ -12,11 +18,14 @@ import {
   toggleFeedPostBookmark,
   toggleFeedPostLike,
 } from "@/lib/user-actions";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 import { PostActionIcon } from "./figma-controls";
 import { ShareButton } from "./share-button";
 
 type PostActionsProps = {
+  artistUsername: string;
   comments: number;
+  commentsClosedByDefault?: boolean;
   commentsAnchorId?: string;
   initialLikes: number;
   postId: string;
@@ -26,7 +35,9 @@ type PostActionsProps = {
 };
 
 export function PostActions({
+  artistUsername,
   comments,
+  commentsClosedByDefault = false,
   commentsAnchorId,
   initialLikes,
   postId,
@@ -39,10 +50,24 @@ export function PostActions({
     readUserActionSnapshot,
     () => defaultUserActionSnapshot,
   );
+  const appSettings = useSyncExternalStore(
+    subscribeAppSettingsChange,
+    readAppSettings,
+    () => defaultAppSettings,
+  );
   const bookmarked = isFeedPostBookmarked(actionSnapshot, postId);
   const liked = isFeedPostLiked(actionSnapshot, postId);
   const likeCount = getFeedPostLikeCount(actionSnapshot, postId, initialLikes);
   const commentCount = getFeedPostCommentCount(actionSnapshot, postId, comments);
+  const commentSettings = getFeedCommentSettings(
+    actionSnapshot,
+    postId,
+    commentsClosedByDefault,
+  );
+  const isPostOwner = artistUsername === MY_PROFILE_USERNAME;
+  const showEngagementCounts =
+    !isPostOwner || appSettings.engagementCountDisplay === "show";
+  const canOpenComments = isPostOwner || !commentSettings.commentsClosed;
 
   const showComments = () => {
     if (!commentsAnchorId) {
@@ -65,16 +90,22 @@ export function PostActions({
           kind="heart"
           onClick={() => toggleFeedPostLike(postId)}
         />
-        <span className="text-xs font-bold text-black">{likeCount}</span>
+        {showEngagementCounts ? (
+          <span className="text-xs font-bold text-black">{likeCount}</span>
+        ) : null}
       </div>
-      <div className="ml-6 flex items-center gap-1">
-        <PostActionIcon
-          aria-label="댓글로 이동"
-          kind="message"
-          onClick={showComments}
-        />
-        <span className="text-xs font-bold text-black">{commentCount}</span>
-      </div>
+      {canOpenComments ? (
+        <div className="ml-6 flex items-center gap-1">
+          <PostActionIcon
+            aria-label="댓글로 이동"
+            kind="message"
+            onClick={showComments}
+          />
+          {showEngagementCounts ? (
+            <span className="text-xs font-bold text-black">{commentCount}</span>
+          ) : null}
+        </div>
+      ) : null}
       {shareUrl ? (
         <ShareButton
           className="ml-6"

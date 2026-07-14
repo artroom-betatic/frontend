@@ -1,14 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   defaultUserActionSnapshot,
   getFeedPostInterest,
+  isFeedPostReported,
+  isUsernameBlocked,
+  isUsernameReported,
   readUserActionSnapshot,
   setFeedPostInterest,
+  setUsernameBlocked,
   subscribeUserActionsChange,
 } from "@/lib/user-actions";
 import type { FeedPostInterest } from "@/lib/user-actions";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 
 type FeedInterestControlsProps = {
   className?: string;
@@ -66,6 +72,7 @@ export function FeedInterestControls({
 }
 
 type FeedInterestMenuProps = {
+  artistUsername: string;
   className?: string;
   postId: string;
 };
@@ -86,6 +93,7 @@ function MoreIcon() {
 }
 
 export function FeedInterestMenu({
+  artistUsername,
   className = "",
   postId,
 }: FeedInterestMenuProps) {
@@ -97,6 +105,16 @@ export function FeedInterestMenu({
     () => defaultUserActionSnapshot,
   );
   const selectedInterest = getFeedPostInterest(actionSnapshot, postId);
+  const feedReported = isFeedPostReported(actionSnapshot, postId);
+  const accountReported = isUsernameReported(actionSnapshot, artistUsername);
+  const accountBlocked = isUsernameBlocked(actionSnapshot, artistUsername);
+  const isOwnAccount = artistUsername === MY_PROFILE_USERNAME;
+  const feedReportHref = `/report?type=feed&postId=${encodeURIComponent(
+    postId,
+  )}&username=${encodeURIComponent(artistUsername)}`;
+  const accountReportHref = `/report?type=account&username=${encodeURIComponent(
+    artistUsername,
+  )}`;
 
   useEffect(() => {
     if (!open) {
@@ -121,6 +139,10 @@ export function FeedInterestMenu({
     );
     setOpen(false);
   };
+  const toggleAccountBlock = () => {
+    setUsernameBlocked(artistUsername, !accountBlocked);
+    setOpen(false);
+  };
 
   return (
     <div className={`relative ${className}`} ref={menuRef}>
@@ -138,7 +160,7 @@ export function FeedInterestMenu({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-10 z-30 w-36 overflow-hidden rounded-md border border-line bg-white shadow-lg"
+          className="absolute right-0 top-10 z-30 w-44 overflow-hidden rounded-md border border-line bg-white shadow-lg"
           role="menu"
         >
           {interestOptions.map((option) => {
@@ -160,6 +182,41 @@ export function FeedInterestMenu({
               </button>
             );
           })}
+          {!isOwnAccount ? (
+            <div className="border-t border-line">
+              <Link
+                className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold ${
+                  feedReported ? "text-muted" : "text-foreground"
+                }`}
+                href={feedReportHref}
+                onClick={() => setOpen(false)}
+                role="menuitem"
+              >
+                <span>{feedReported ? "피드 신고됨" : "피드 신고"}</span>
+                {feedReported ? <span aria-hidden="true">✓</span> : null}
+              </Link>
+              <Link
+                className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold ${
+                  accountReported ? "text-muted" : "text-foreground"
+                }`}
+                href={accountReportHref}
+                onClick={() => setOpen(false)}
+                role="menuitem"
+              >
+                <span>{accountReported ? "계정 신고됨" : "계정 신고"}</span>
+                {accountReported ? <span aria-hidden="true">✓</span> : null}
+              </Link>
+              <button
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-foreground"
+                onClick={toggleAccountBlock}
+                role="menuitem"
+                type="button"
+              >
+                <span>{accountBlocked ? "차단 해제" : "계정 차단"}</span>
+                {accountBlocked ? <span aria-hidden="true">✓</span> : null}
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
