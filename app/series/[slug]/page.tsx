@@ -47,9 +47,9 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
         backHref={series.creator.href}
         title="시리즈"
       />
-      <main className="pb-[96px]">
+      <main className="pb-24">
         <section className="bg-white px-6 pb-6 pt-5">
-          <div className="relative aspect-square overflow-hidden rounded-[6px] bg-[#f9fafb]">
+          <div className="relative aspect-square overflow-hidden rounded-md bg-panel">
             <Image
               alt={series.imageAlt}
               className="object-cover"
@@ -61,12 +61,12 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           </div>
 
           <div className="mt-5">
-            <p className="text-xs font-semibold text-[#307cff]">
+            <p className="text-xs font-semibold text-primary">
               {series.subtitle} · {series.statusLabel}
             </p>
             <h1 className="mt-2 text-xl font-bold text-black">{series.title}</h1>
             <Link
-              className="mt-2 block text-xs font-medium text-[#929aa8]"
+              className="mt-2 block text-xs font-medium text-muted"
               href={series.creator.href}
             >
               @{series.creator.username}
@@ -76,13 +76,13 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             </p>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-[6px]">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {series.tags.map((tag) => (
               <FigmaTag key={tag}>#{tag}</FigmaTag>
             ))}
           </div>
 
-          <p className="mt-5 text-sm leading-6 text-[#1f2937]">
+          <p className="mt-5 text-sm leading-6 text-foreground">
             {series.description}
           </p>
         </section>

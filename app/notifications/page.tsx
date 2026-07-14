@@ -16,7 +16,7 @@ export default function NotificationsPage() {
         backHref="/menu"
         title="알림 설정"
       />
-      <main className="px-6 pb-8 pt-[14px]">
+      <main className="px-6 pb-8 pt-3.5">
         <NotificationSettingsClient groups={notificationGroups} />
       </main>
     </AppFrame>

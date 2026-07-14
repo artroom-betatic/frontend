@@ -36,7 +36,7 @@ export function LibraryClient({ artworks, feedPosts }: LibraryClientProps) {
   ];
 
   return (
-    <main className="px-6 pb-[96px] pt-5">
+    <main className="px-6 pb-24 pt-5">
       <p className="text-sm font-medium leading-6 text-subtle">
         구매한 디지털 작품과 저장한 피드를 다시 볼 수 있습니다.
       </p>
@@ -45,7 +45,7 @@ export function LibraryClient({ artworks, feedPosts }: LibraryClientProps) {
         {collectionSummary.map((item) => (
           <UiCard className="bg-white p-3 text-center" key={item.label}>
             <p className="text-lg font-bold text-foreground">{item.value}</p>
-            <p className="mt-1 text-[10px] text-muted">{item.label}</p>
+            <p className="mt-1 text-2xs text-muted">{item.label}</p>
           </UiCard>
         ))}
       </div>

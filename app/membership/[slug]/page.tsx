@@ -50,9 +50,9 @@ export default async function MembershipDetailPage({
         backHref="/membership"
         title="멤버십 상세"
       />
-      <main className="pb-[96px]">
+      <main className="pb-24">
         <section className="bg-white px-6 pb-6 pt-5">
-          <div className="relative aspect-square overflow-hidden rounded-[6px] bg-panel">
+          <div className="relative aspect-square overflow-hidden rounded-md bg-panel">
             <Image
               alt={membership.imageAlt}
               className="object-cover"

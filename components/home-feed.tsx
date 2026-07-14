@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent, TouchEvent } from "react";
 import {
   useCallback,
   useEffect,
@@ -24,8 +24,10 @@ import type { FeedPost } from "@/lib/feed-types";
 import { ActionButton } from "./action-button";
 import { AssetIcon } from "./asset-icon";
 import { BottomNav } from "./bottom-nav";
+import { FeedInterestMenu } from "./feed-interest-controls";
 import { PostActionIcon } from "./figma-controls";
 import { ProfileAvatar } from "./profile-avatar";
+import { ShareButton } from "./share-button";
 import { UiCard } from "./ui-card";
 import {
   addFeedComment,
@@ -44,6 +46,9 @@ import {
 } from "@/lib/user-actions";
 
 const FEED_PAGE_SIZE = 3;
+const SLIDE_CONTROL_HIDE_DELAY_MS = 2500;
+const SLIDE_SWIPE_THRESHOLD_PX = 44;
+const SLIDE_SWIPE_VERTICAL_TOLERANCE_PX = 80;
 
 type FeedStatus = "error" | "loading" | "loadingMore" | "ready";
 
@@ -59,18 +64,18 @@ function CommentRow({
   time: string;
 }) {
   return (
-    <article className="flex items-center justify-between gap-4 px-[15px] py-[10px]">
-      <div className="flex min-w-0 items-start gap-[6px]">
+    <article className="flex items-center justify-between gap-4 px-4 py-2.5">
+      <div className="flex min-w-0 items-start gap-1.5">
         <ProfileAvatar size={40} />
         <div className="min-w-0">
-          <p className="text-[9px] font-semibold leading-none text-[#040404]">
-            {author} <span className="font-normal text-[#b0b0b0]">{time}</span>
+          <p className="text-3xs font-semibold leading-none text-black">
+            {author} <span className="font-normal text-muted/70">{time}</span>
           </p>
-          <p className="mt-1 truncate text-[10px] font-medium leading-3 text-black">
+          <p className="mt-1 truncate text-2xs font-medium leading-3 text-black">
             {body}
           </p>
           <button
-            className="mt-1 text-[10px] font-semibold leading-3 text-[#b0b0b0]"
+            className="mt-1 text-2xs font-semibold leading-3 text-muted/70"
             onClick={() => onReply(author)}
             type="button"
           >
@@ -115,17 +120,17 @@ function CommentsSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-40 mx-auto w-full max-w-[390px] bg-[rgba(40,36,36,0.5)]">
+    <div className="fixed inset-0 z-40 mx-auto w-full max-w-app bg-black/50">
       <button
         aria-label="댓글창 닫기"
         className="absolute inset-0"
         onClick={onClose}
         type="button"
       />
-      <section className="absolute bottom-0 left-0 z-10 h-[467px] w-full overflow-hidden rounded-t-[50px] bg-white">
-        <div className="mx-auto mt-[15px] h-[3px] w-10 rounded-full bg-[#b0b0b0]" />
+      <section className="absolute bottom-0 left-0 z-10 h-comments-sheet w-full overflow-hidden rounded-t-sheet bg-white">
+        <div className="mx-auto mt-4 h-1 w-10 rounded-full bg-muted/70" />
         <h2 className="mt-3 text-center text-xs font-medium text-black">댓글</h2>
-        <div className="mt-6 max-h-[314px] overflow-y-auto">
+        <div className="mt-6 max-h-80 overflow-y-auto">
           {commentRows.map((comment, index) => (
             <CommentRow
               {...comment}
@@ -137,19 +142,19 @@ function CommentsSheet({
           ))}
         </div>
         <form
-          className="absolute bottom-0 left-0 flex h-[70px] w-full items-center gap-2 border-t border-[#b0b0b0] bg-white px-[17px]"
+          className="absolute bottom-0 left-0 flex h-bottom-nav w-full items-center gap-2 border-t border-muted/70 bg-white px-4"
           onSubmit={submitComment}
         >
           <ProfileAvatar size={30} />
           <input
             aria-label="댓글 입력"
-            className="flex h-[30px] min-w-0 flex-1 items-center rounded-full border border-[#b0b0b0] px-[14px] text-xs font-medium text-black outline-none placeholder:text-[#929aa8]"
+            className="flex h-7.5 min-w-0 flex-1 items-center rounded-full border border-muted/70 px-3.5 text-xs font-medium text-black outline-none placeholder:text-muted"
             onChange={(event) => setDraftComment(event.currentTarget.value)}
             placeholder="대화 참여하기..."
             value={draftComment}
           />
           <button
-            className="h-[30px] rounded-[5px] bg-[#307cff] px-3 text-xs font-medium text-white disabled:bg-[#d0d5dd]"
+            className="h-7.5 rounded-md bg-primary px-3 text-xs font-medium text-white disabled:bg-line"
             disabled={!draftComment.trim()}
             type="submit"
           >
@@ -167,13 +172,13 @@ function FeedSkeleton() {
       {[0, 1].map((item) => (
         <div className="grid gap-4" key={item}>
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-[#e5e7eb]" />
+            <div className="h-8 w-8 rounded-full bg-line" />
             <div className="grid gap-2">
-              <div className="h-3 w-24 rounded-full bg-[#e5e7eb]" />
-              <div className="h-2 w-16 rounded-full bg-[#eef0f3]" />
+              <div className="h-3 w-24 rounded-full bg-line" />
+              <div className="h-2 w-16 rounded-full bg-background" />
             </div>
           </div>
-          <div className="h-[360px] rounded-[6px] bg-[#f3f4f6]" />
+          <div className="h-90 rounded-md bg-panel" />
         </div>
       ))}
     </div>
@@ -201,7 +206,11 @@ function FeedPostArticle({
   };
   const slides = post.imageSlides?.length ? post.imageSlides : [fallbackSlide];
   const [slideIndex, setSlideIndex] = useState(0);
+  const [slideControlsVisible, setSlideControlsVisible] = useState(true);
+  const slideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressSlideLinkUntilRef = useRef(0);
   const currentSlide = slides[slideIndex] ?? fallbackSlide;
+  const hasMultipleSlides = slides.length > 1;
   const bookmarked = isFeedPostBookmarked(actionSnapshot, post.id);
   const isFollowing = getArtistFollowing(
     actionSnapshot,
@@ -216,44 +225,136 @@ function FeedPostArticle({
     post.comments,
   );
 
-  const showPreviousSlide = () => {
+  const revealSlideControls = useCallback(() => {
+    if (hasMultipleSlides) {
+      setSlideControlsVisible(true);
+    }
+  }, [hasMultipleSlides]);
+
+  const showPreviousSlide = useCallback(() => {
+    if (!hasMultipleSlides) {
+      return;
+    }
+
+    revealSlideControls();
     setSlideIndex((current) => (current - 1 + slides.length) % slides.length);
+  }, [hasMultipleSlides, revealSlideControls, slides.length]);
+
+  const showNextSlide = useCallback(() => {
+    if (!hasMultipleSlides) {
+      return;
+    }
+
+    revealSlideControls();
+    setSlideIndex((current) => (current + 1) % slides.length);
+  }, [hasMultipleSlides, revealSlideControls, slides.length]);
+
+  useEffect(() => {
+    if (!hasMultipleSlides || !slideControlsVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(
+      () => setSlideControlsVisible(false),
+      SLIDE_CONTROL_HIDE_DELAY_MS,
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hasMultipleSlides, slideControlsVisible, slideIndex]);
+
+  const handleSlideTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    revealSlideControls();
+    slideTouchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
   };
 
-  const showNextSlide = () => {
-    setSlideIndex((current) => (current + 1) % slides.length);
+  const handleSlideTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const touchStart = slideTouchStartRef.current;
+    const touch = event.changedTouches[0];
+
+    slideTouchStartRef.current = null;
+
+    if (!touchStart || !touch || !hasMultipleSlides) {
+      return;
+    }
+
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+
+    if (
+      Math.abs(deltaX) < SLIDE_SWIPE_THRESHOLD_PX ||
+      Math.abs(deltaY) > SLIDE_SWIPE_VERTICAL_TOLERANCE_PX
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    suppressSlideLinkUntilRef.current = Date.now() + 450;
+
+    if (deltaX < 0) {
+      showNextSlide();
+    } else {
+      showPreviousSlide();
+    }
   };
+
+  const handleSlideLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (Date.now() < suppressSlideLinkUntilRef.current) {
+      event.preventDefault();
+    }
+  };
+
+  const slideButtonVisibilityClassName = slideControlsVisible
+    ? "opacity-100"
+    : "pointer-events-none opacity-0";
 
   return (
     <article className="border-b border-white bg-white">
-      <div className="flex h-[62px] items-center px-[14px] py-4">
+      <div className="flex h-15.5 items-center px-3.5 py-4">
         <Link className="flex min-w-0 flex-1 items-center" href={post.artist.href}>
-          <ProfileAvatar className="mx-[7px]" size={32} />
+          <ProfileAvatar className="mx-2" size={32} />
           <div className="ml-2 min-w-0">
-            <p className="truncate text-[13px] font-semibold leading-4 text-black">
+            <p className="truncate text-sm font-semibold leading-4 text-black">
               {post.artist.displayName}
             </p>
-            <p className="mt-0.5 text-[10px] font-medium text-[#929aa8]">
+            <p className="mt-0.5 text-2xs font-medium text-muted">
               @{post.artist.username} · {post.createdAtLabel}
             </p>
           </div>
         </Link>
-        <ActionButton
-          aria-pressed={isFollowing}
-          onClick={() =>
-            setArtistFollowing(post.artist.username, !isFollowing)
-          }
-          variant={isFollowing ? "following" : "follow"}
-        >
-          {isFollowing ? "팔로잉" : "팔로우"}
-        </ActionButton>
+        <div className="flex shrink-0 items-center gap-1">
+          <ActionButton
+            aria-pressed={isFollowing}
+            onClick={() =>
+              setArtistFollowing(post.artist.username, !isFollowing)
+            }
+            variant={isFollowing ? "following" : "follow"}
+          >
+            {isFollowing ? "팔로잉" : "팔로우"}
+          </ActionButton>
+          <FeedInterestMenu postId={post.id} />
+        </div>
       </div>
 
-      <div className="relative h-[491px] w-full overflow-hidden bg-[#f9fafb]">
+      <div
+        className="relative h-feed-media w-full touch-pan-y overflow-hidden bg-panel"
+        onMouseMove={revealSlideControls}
+        onTouchEnd={handleSlideTouchEnd}
+        onTouchStart={handleSlideTouchStart}
+      >
         <Link
           aria-label={`${post.artist.displayName}의 피드 자세히 보기`}
           className="absolute inset-0 z-10"
           href={post.href}
+          onClick={handleSlideLinkClick}
         />
         <Image
           alt={currentSlide.imageAlt}
@@ -263,25 +364,29 @@ function FeedPostArticle({
           sizes="390px"
           src={currentSlide.imageSrc}
         />
-        <span className="absolute right-[44px] top-[14px] z-20 rounded-full bg-black/50 px-2 py-1 text-[10px] font-semibold text-white">
-          {slideIndex + 1}/{slides.length} {currentSlide.label}
-        </span>
-        <button
-          aria-label="이전 이미지"
-          className="absolute left-[9px] top-1/2 z-20 flex h-[26px] w-[26px] -translate-y-1/2 items-center justify-center rounded-full bg-white/75 text-[#929aa8]"
-          onClick={showPreviousSlide}
-          type="button"
-        >
-          ‹
-        </button>
-        <button
-          aria-label="다음 이미지"
-          className="absolute right-[9px] top-1/2 z-20 flex h-[26px] w-[26px] -translate-y-1/2 items-center justify-center rounded-full bg-white/75 text-[#929aa8]"
-          onClick={showNextSlide}
-          type="button"
-        >
-          ›
-        </button>
+        {hasMultipleSlides ? (
+          <>
+            <span className="absolute right-11 top-3.5 z-20 rounded-full bg-black/50 px-2 py-1 text-2xs font-semibold text-white">
+              {slideIndex + 1}/{slides.length} {currentSlide.label}
+            </span>
+            <button
+              aria-label="이전 이미지"
+              className={`absolute left-2.25 top-1/2 z-20 flex size-6.5 -translate-y-1/2 items-center justify-center rounded-full bg-white/75 text-muted transition-opacity ${slideButtonVisibilityClassName}`}
+              onClick={showPreviousSlide}
+              type="button"
+            >
+              ‹
+            </button>
+            <button
+              aria-label="다음 이미지"
+              className={`absolute right-2.25 top-1/2 z-20 flex size-6.5 -translate-y-1/2 items-center justify-center rounded-full bg-white/75 text-muted transition-opacity ${slideButtonVisibilityClassName}`}
+              onClick={showNextSlide}
+              type="button"
+            >
+              ›
+            </button>
+          </>
+        ) : null}
       </div>
 
       <div className="bg-white px-4 py-4">
@@ -296,7 +401,7 @@ function FeedPostArticle({
             />
             <span className="text-xs font-bold text-black">{likes}</span>
           </div>
-          <div className="ml-[25px] flex items-center gap-1">
+          <div className="ml-6 flex items-center gap-1">
             <PostActionIcon
               aria-label="댓글 보기"
               kind="message"
@@ -304,6 +409,12 @@ function FeedPostArticle({
             />
             <span className="text-xs font-bold text-black">{commentCount}</span>
           </div>
+          <ShareButton
+            className="ml-6"
+            shareText={post.body}
+            shareTitle={`${post.artist.displayName}의 피드`}
+            shareUrl={post.href}
+          />
           <PostActionIcon
             active={bookmarked}
             aria-label={bookmarked ? "소장함에서 제거" : "소장함에 저장"}
@@ -313,15 +424,15 @@ function FeedPostArticle({
             onClick={() => toggleFeedPostBookmark(post.id)}
           />
         </div>
-        <div className="mt-[5px]">
-          <p className="flex items-center text-[10px] leading-3 text-black">
-            <span className="relative mr-2 flex w-[29px] shrink-0">
+        <div className="mt-1">
+          <p className="flex items-center text-2xs leading-3 text-black">
+            <span className="relative mr-2 flex w-7 shrink-0">
               <ProfileAvatar className="border border-white" size={22} />
-              <ProfileAvatar className="-ml-[15px] border border-white" size={22} />
+              <ProfileAvatar className="-ml-4 border border-white" size={22} />
             </span>
             <span>{post.likedBy}</span>
           </p>
-          <p className="mt-2 text-[10px] font-medium leading-3 text-black">
+          <p className="mt-2 text-2xs font-medium leading-3 text-black">
             <Link className="font-bold" href={post.artist.href}>
               {post.artist.username}
             </Link>{" "}
@@ -447,13 +558,13 @@ export function HomeFeed() {
 
   return (
     <>
-      <div className="min-h-screen bg-white pb-[70px]">
-        <header className="sticky top-0 z-20 flex h-[50px] items-center justify-between bg-white px-[26px]">
-          <h1 className="text-[13px] font-bold tracking-[-0.01em] text-black">
+      <div className="min-h-screen bg-white pb-bottom-nav">
+        <header className="sticky top-0 z-20 flex h-12.5 items-center justify-between bg-white px-6.5">
+          <h1 className="text-sm font-bold tracking-normal text-black">
             Artroom
           </h1>
           {appSettings.contentDisplay !== "balanced" ? (
-            <span className="rounded-[5px] bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+            <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
               {selectedContentDisplayOption.label}
             </span>
           ) : null}
@@ -474,9 +585,9 @@ export function HomeFeed() {
           <div className="px-4 py-5">
             <UiCard>
               <p className="text-sm font-semibold">피드를 불러오지 못했습니다</p>
-              <p className="mt-2 text-xs leading-5 text-[#929aa8]">{errorMessage}</p>
+              <p className="mt-2 text-xs leading-5 text-muted">{errorMessage}</p>
               <button
-                className="mt-4 rounded-[5px] bg-[#307cff] px-3 py-[7px] text-xs font-medium text-white"
+                className="mt-4 rounded-md bg-primary px-3 py-2 text-xs font-medium text-white"
                 onClick={retryFeed}
                 type="button"
               >
@@ -487,13 +598,13 @@ export function HomeFeed() {
         ) : null}
 
         {status === "loadingMore" ? (
-          <p className="py-5 text-center text-xs font-medium text-[#929aa8]">
+          <p className="py-5 text-center text-xs font-medium text-muted">
             새 피드를 불러오는 중
           </p>
         ) : null}
 
         {!hasMore && posts.length ? (
-          <p className="py-5 text-center text-xs font-medium text-[#929aa8]">
+          <p className="py-5 text-center text-xs font-medium text-muted">
             모든 피드를 확인했어요
           </p>
         ) : null}

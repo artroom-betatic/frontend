@@ -247,7 +247,7 @@ export function CreatorMembershipClient() {
                   })}
                 </div>
               </div>
-              <p className="mt-3 text-[10px] font-medium leading-4 text-muted">
+              <p className="mt-3 text-2xs font-medium leading-4 text-muted">
                 공개 전에는 프로필에 노출되지 않습니다.
               </p>
             </UiCard>
@@ -312,7 +312,7 @@ export function CreatorMembershipClient() {
                     }
                     value={tier.price}
                   />
-                  <span className="mt-2 block text-[10px] font-semibold text-muted">
+                  <span className="mt-2 block text-2xs font-semibold text-muted">
                     {formatPrice(tier.price)}
                   </span>
                 </label>
@@ -428,7 +428,7 @@ export function CreatorMembershipClient() {
                     </div>
                   </div>
                 </div>
-                <p className="mt-3 text-[10px] font-medium leading-4 text-muted">
+                <p className="mt-3 text-2xs font-medium leading-4 text-muted">
                   예약은 멤버십 공개 시 함께 노출할 콘텐츠로 대기시키는
                   상태입니다. 공개는 가입자가 바로 볼 수 있는 상태입니다.
                 </p>
@@ -483,12 +483,12 @@ export function CreatorMembershipClient() {
                     <p className="text-sm font-medium leading-5 text-foreground">
                       {item.title}
                     </p>
-                    <p className="mt-1 text-[10px] font-semibold text-muted">
+                    <p className="mt-1 text-2xs font-semibold text-muted">
                       {item.detail}
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold ${
+                    className={`shrink-0 rounded-md px-2 py-1 text-2xs font-semibold ${
                       item.complete
                         ? "bg-panel text-primary"
                         : "bg-panel text-muted"

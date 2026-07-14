@@ -12,7 +12,7 @@ export default function SettingsPage() {
   return (
     <AppFrame>
       <MobileHeader backBehavior="history" backHref="/menu" title="앱 설정" />
-      <main className="px-6 pb-[96px] pt-5">
+      <main className="px-6 pb-24 pt-5">
         <AppSettingsClient />
       </main>
       <BottomNav />

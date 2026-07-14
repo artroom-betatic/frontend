@@ -61,7 +61,7 @@ export function ArtistActions({
         </ActionButton>
       </div>
       {statusMessage ? (
-        <p className="mt-3 text-xs font-medium text-[#307cff]">{statusMessage}</p>
+        <p className="mt-3 text-xs font-medium text-primary">{statusMessage}</p>
       ) : null}
     </>
   );

@@ -125,12 +125,12 @@ export function MyPageClient({ profile }: MyPageClientProps) {
   }, [toastMessage]);
 
   return (
-    <main className="px-6 pb-[96px] pt-5">
+    <main className="px-6 pb-24 pt-5">
       <section className="bg-white">
         <div className="flex items-start gap-4">
           <button
             aria-label="프로필 이미지 변경"
-            className="relative h-[82px] w-[82px] overflow-hidden rounded-full bg-[#f0f2f5]"
+            className="relative size-20.5 overflow-hidden rounded-full bg-panel"
             onClick={() => fileInputRef.current?.click()}
             type="button"
           >
@@ -145,10 +145,10 @@ export function MyPageClient({ profile }: MyPageClientProps) {
           </button>
           <div className="min-w-0 flex-1 pt-1">
             <h1 className="truncate text-xl font-bold text-black">내 프로필</h1>
-            <p className="mt-1 text-xs font-medium text-[#929aa8]">
+            <p className="mt-1 text-xs font-medium text-muted">
               @{myProfile.username}
             </p>
-            <p className="mt-2 text-xs font-medium text-[#307cff]">
+            <p className="mt-2 text-xs font-medium text-primary">
               {myProfile.followersLabel}
             </p>
           </div>
@@ -172,7 +172,7 @@ export function MyPageClient({ profile }: MyPageClientProps) {
         </div>
 
         {statusMessage ? (
-          <p className="mt-3 text-xs font-medium text-[#307cff]">{statusMessage}</p>
+          <p className="mt-3 text-xs font-medium text-primary">{statusMessage}</p>
         ) : null}
       </section>
 
@@ -180,7 +180,7 @@ export function MyPageClient({ profile }: MyPageClientProps) {
         {myStats.map((stat) => (
           <UiCard className="p-3 text-center" key={stat.label}>
             <p className="text-lg font-bold">{stat.value}</p>
-            <p className="mt-1 text-[10px] text-[#929aa8]">{stat.label}</p>
+            <p className="mt-1 text-2xs text-muted">{stat.label}</p>
           </UiCard>
         ))}
       </div>

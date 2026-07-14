@@ -37,23 +37,23 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
   return (
     <AppFrame>
       <MobileHeader backBehavior="history" backHref="/" title="피드" />
-      <main className="pb-[96px]">
+      <main className="pb-24">
         <article className="bg-white">
-          <div className="flex h-[62px] items-center px-[14px] py-4">
+          <div className="flex h-15.5 items-center px-3.5 py-4">
             <Link className="flex min-w-0 flex-1 items-center" href={post.artist.href}>
-              <ProfileAvatar className="mx-[7px]" size={32} />
+              <ProfileAvatar className="mx-2" size={32} />
               <div className="ml-2 min-w-0">
-                <p className="truncate text-[13px] font-semibold leading-4 text-black">
+                <p className="truncate text-sm font-semibold leading-4 text-black">
                   {post.artist.displayName}
                 </p>
-                <p className="mt-0.5 text-[10px] font-medium text-[#929aa8]">
+                <p className="mt-0.5 text-2xs font-medium text-muted">
                   @{post.artist.username} · {post.createdAtLabel}
                 </p>
               </div>
             </Link>
           </div>
 
-          <div className="relative h-[491px] w-full overflow-hidden bg-[#f9fafb]">
+          <div className="relative h-feed-media w-full overflow-hidden bg-panel">
             <Image
               alt={post.imageAlt}
               className="object-cover"
@@ -70,12 +70,15 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               commentsAnchorId="feed-comments"
               initialLikes={post.likes}
               postId={post.id}
+              shareText={post.body}
+              shareTitle={`${post.artist.displayName}의 피드`}
+              shareUrl={post.href}
             />
 
-            <p className="mt-[5px] flex items-center text-[10px] leading-3 text-black">
-              <span className="relative mr-2 flex w-[29px] shrink-0">
+            <p className="mt-1 flex items-center text-2xs leading-3 text-black">
+              <span className="relative mr-2 flex w-7 shrink-0">
                 <ProfileAvatar className="border border-white" size={22} />
-                <ProfileAvatar className="-ml-[15px] border border-white" size={22} />
+                <ProfileAvatar className="-ml-4 border border-white" size={22} />
               </span>
               <span>{post.likedBy}</span>
             </p>

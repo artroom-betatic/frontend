@@ -5,9 +5,12 @@ export type StoredFeedComment = {
   time: string;
 };
 
+export type FeedPostInterest = "interested" | "notInterested";
+
 export type UserActionSnapshot = {
   bookmarkedPostIds: string[];
   commentsByPostId: Record<string, StoredFeedComment[]>;
+  feedInterestByPostId: Record<string, FeedPostInterest>;
   followingByUsername: Record<string, boolean>;
   likedPostIds: string[];
 };
@@ -18,6 +21,7 @@ export const USER_ACTIONS_UPDATED_EVENT = "artroom:user-actions-updated";
 export const defaultUserActionSnapshot: UserActionSnapshot = {
   bookmarkedPostIds: [],
   commentsByPostId: {},
+  feedInterestByPostId: {},
   followingByUsername: {},
   likedPostIds: [],
 };
@@ -89,6 +93,21 @@ function normalizeFollowingByUsername(value: unknown): Record<string, boolean> {
   );
 }
 
+function normalizeFeedInterestByPostId(
+  value: unknown,
+): Record<string, FeedPostInterest> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, FeedPostInterest] =>
+        entry[1] === "interested" || entry[1] === "notInterested",
+    ),
+  );
+}
+
 function normalizeUserActions(value: unknown): UserActionSnapshot {
   if (!isRecord(value)) {
     return defaultUserActionSnapshot;
@@ -97,6 +116,9 @@ function normalizeUserActions(value: unknown): UserActionSnapshot {
   return {
     bookmarkedPostIds: normalizeStringList(value.bookmarkedPostIds),
     commentsByPostId: normalizeCommentsByPostId(value.commentsByPostId),
+    feedInterestByPostId: normalizeFeedInterestByPostId(
+      value.feedInterestByPostId,
+    ),
     followingByUsername: normalizeFollowingByUsername(value.followingByUsername),
     likedPostIds: normalizeStringList(value.likedPostIds),
   };
@@ -188,6 +210,13 @@ export function isFeedPostBookmarked(
   return snapshot.bookmarkedPostIds.includes(postId);
 }
 
+export function getFeedPostInterest(
+  snapshot: UserActionSnapshot,
+  postId: string,
+) {
+  return snapshot.feedInterestByPostId[postId] ?? null;
+}
+
 export function getArtistFollowing(
   snapshot: UserActionSnapshot,
   username: string,
@@ -231,6 +260,26 @@ export function toggleFeedPostBookmark(postId: string) {
     ...snapshot,
     bookmarkedPostIds: toggleId(snapshot.bookmarkedPostIds, postId),
   }));
+}
+
+export function setFeedPostInterest(
+  postId: string,
+  interest: FeedPostInterest | null,
+) {
+  updateUserActionSnapshot((snapshot) => {
+    const feedInterestByPostId = { ...snapshot.feedInterestByPostId };
+
+    if (interest) {
+      feedInterestByPostId[postId] = interest;
+    } else {
+      delete feedInterestByPostId[postId];
+    }
+
+    return {
+      ...snapshot,
+      feedInterestByPostId,
+    };
+  });
 }
 
 export function setArtistFollowing(username: string, following: boolean) {

@@ -10,7 +10,7 @@ export function ScreenSection({ title, label, children }: ScreenSectionProps) {
   return (
     <section className="mt-4">
       {label ? (
-        <p className="mb-[15px] text-xs font-normal leading-none text-foreground">
+        <p className="mb-4 text-xs font-normal leading-none text-foreground">
           {label}
         </p>
       ) : null}

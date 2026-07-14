@@ -133,7 +133,7 @@ export function CreatorCommissionsClient() {
                   />
                 </label>
               </div>
-              <p className="mt-3 text-[10px] font-semibold text-muted">
+              <p className="mt-3 text-2xs font-semibold text-muted">
                 {formatCreatorCommissionPrice(draft.basePrice)}
               </p>
             </UiCard>
@@ -199,12 +199,12 @@ export function CreatorCommissionsClient() {
                     <p className="text-sm font-medium leading-5 text-foreground">
                       {item.title}
                     </p>
-                    <p className="mt-1 text-[10px] font-semibold text-muted">
+                    <p className="mt-1 text-2xs font-semibold text-muted">
                       {item.detail}
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold ${
+                    className={`shrink-0 rounded-md px-2 py-1 text-2xs font-semibold ${
                       item.complete
                         ? "bg-panel text-primary"
                         : "bg-panel text-muted"

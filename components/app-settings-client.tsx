@@ -104,7 +104,7 @@ export function AppSettingsClient() {
                   {selectedThemeOption.label}
                 </p>
               </div>
-              <span className="rounded-[5px] bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+              <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
                 적용 중
               </span>
             </div>
@@ -145,7 +145,7 @@ export function AppSettingsClient() {
                   {selectedContentDisplayOption.label}
                 </p>
               </div>
-              <span className="rounded-[5px] bg-panel px-2 py-1 text-[10px] font-semibold text-primary">
+              <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
                 홈/검색
               </span>
             </div>

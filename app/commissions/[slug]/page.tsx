@@ -47,9 +47,9 @@ export default async function CommissionOfferPage({
         backHref="/search?tag=commission"
         title="커미션 상세"
       />
-      <main className="pb-[96px]">
+      <main className="pb-24">
         <section className="bg-white px-6 pb-6 pt-5">
-          <div className="relative aspect-square overflow-hidden rounded-[6px] bg-[#f9fafb]">
+          <div className="relative aspect-square overflow-hidden rounded-md bg-panel">
             <Image
               alt={commission.imageAlt}
               className="object-cover"
@@ -61,14 +61,14 @@ export default async function CommissionOfferPage({
           </div>
 
           <div className="mt-5">
-            <p className="text-xs font-semibold text-[#307cff]">
+            <p className="text-xs font-semibold text-primary">
               {commission.subtitle}
             </p>
             <h1 className="mt-2 text-xl font-bold text-black">
               {commission.title}
             </h1>
             <Link
-              className="mt-2 block text-xs font-medium text-[#929aa8]"
+              className="mt-2 block text-xs font-medium text-muted"
               href={commission.creator.href}
             >
               @{commission.creator.username}
@@ -78,25 +78,25 @@ export default async function CommissionOfferPage({
             </p>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-[6px]">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {commission.tags.map((tag) => (
               <FigmaTag key={tag}>#{tag}</FigmaTag>
             ))}
           </div>
 
-          <p className="mt-5 text-sm leading-6 text-[#1f2937]">
+          <p className="mt-5 text-sm leading-6 text-foreground">
             {commission.description}
           </p>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             <Link
-              className="flex min-h-9 items-center justify-center rounded-[5px] bg-[#307cff] px-3 py-2 text-xs font-medium text-white"
+              className="flex min-h-9 items-center justify-center rounded-md bg-primary px-3 py-2 text-xs font-medium text-white"
               href="/commissions"
             >
               의뢰 현황으로
             </Link>
             <Link
-              className="flex min-h-9 items-center justify-center rounded-[5px] bg-[rgba(208,213,221,0.2)] px-3 py-2 text-xs font-medium text-black"
+              className="flex min-h-9 items-center justify-center rounded-md bg-line/20 px-3 py-2 text-xs font-medium text-black"
               href={commission.creator.href}
             >
               작가 프로필

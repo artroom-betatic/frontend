@@ -25,20 +25,20 @@ export default function CommissionsPage() {
         backHref="/menu"
         title="커미션 의뢰 현황"
       />
-      <main className="px-6 pb-8 pt-[14px]">
+      <main className="px-6 pb-8 pt-3.5">
         <ScreenSection title="커미션 의뢰 현황">
           <UiCard>
             <div className="grid grid-cols-3 gap-2">
               {summary.slice(0, 3).map((item) => (
                 <div
-                  className="rounded-[6px] border border-[#e5e7eb] bg-[#f9fafb] p-[13px]"
+                  className="rounded-md border border-line bg-panel p-3"
                   key={item.label}
                 >
                   <p className="text-xs">{item.label}</p>
                   <p className="mt-3 text-xl font-bold">{item.value}</p>
                 </div>
               ))}
-              <div className="col-span-3 rounded-[6px] border border-[#e5e7eb] bg-[#f9fafb] p-[13px]">
+              <div className="col-span-3 rounded-md border border-line bg-panel p-3">
                 <p className="text-xs">취소</p>
                 <p className="mt-3 text-xl font-bold">1</p>
               </div>
@@ -49,13 +49,13 @@ export default function CommissionsPage() {
         <ScreenSection title="의뢰 목록">
           <div className="grid gap-4">
             {commissions.map((commission) => (
-              <UiCard className="min-h-[91px]" key={commission.title}>
+              <UiCard className="min-h-24" key={commission.title}>
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-xs font-normal">
                       {commission.title}
                     </h3>
-                    <div className="mt-3 h-[11px] w-[78px] rounded-[4px] bg-[#e5e7eb]" />
+                    <div className="mt-3 h-3 w-20 rounded bg-line" />
                     <FigmaTag
                       active={commission.status === "진행 중"}
                       className="mt-3"

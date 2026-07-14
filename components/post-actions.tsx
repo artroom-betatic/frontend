@@ -13,12 +13,16 @@ import {
   toggleFeedPostLike,
 } from "@/lib/user-actions";
 import { PostActionIcon } from "./figma-controls";
+import { ShareButton } from "./share-button";
 
 type PostActionsProps = {
   comments: number;
   commentsAnchorId?: string;
   initialLikes: number;
   postId: string;
+  shareText?: string;
+  shareTitle?: string;
+  shareUrl?: string;
 };
 
 export function PostActions({
@@ -26,6 +30,9 @@ export function PostActions({
   commentsAnchorId,
   initialLikes,
   postId,
+  shareText,
+  shareTitle,
+  shareUrl,
 }: PostActionsProps) {
   const actionSnapshot = useSyncExternalStore(
     subscribeUserActionsChange,
@@ -60,7 +67,7 @@ export function PostActions({
         />
         <span className="text-xs font-bold text-black">{likeCount}</span>
       </div>
-      <div className="ml-[25px] flex items-center gap-1">
+      <div className="ml-6 flex items-center gap-1">
         <PostActionIcon
           aria-label="댓글로 이동"
           kind="message"
@@ -68,6 +75,14 @@ export function PostActions({
         />
         <span className="text-xs font-bold text-black">{commentCount}</span>
       </div>
+      {shareUrl ? (
+        <ShareButton
+          className="ml-6"
+          shareText={shareText}
+          shareTitle={shareTitle ?? "Artroom 피드"}
+          shareUrl={shareUrl}
+        />
+      ) : null}
       <PostActionIcon
         active={bookmarked}
         aria-label={bookmarked ? "소장함에서 제거" : "소장함에 저장"}

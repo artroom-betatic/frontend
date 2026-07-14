@@ -170,7 +170,7 @@ export function CreatorArtworkForm() {
                     />
                   </label>
                 </div>
-                <p className="mt-3 text-[10px] font-semibold text-muted">
+                <p className="mt-3 text-2xs font-semibold text-muted">
                   {formatCreatorArtworkPrice(draft.price)}
                 </p>
               </UiCard>
@@ -198,7 +198,7 @@ export function CreatorArtworkForm() {
                     );
                   })}
                 </div>
-                <p className="mt-3 text-[10px] font-medium leading-4 text-muted">
+                <p className="mt-3 text-2xs font-medium leading-4 text-muted">
                   초안은 내 작품 목록에만 보관되고, 공개는 판매 준비가 된 작품으로
                   표시됩니다.
                 </p>

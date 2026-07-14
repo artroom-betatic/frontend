@@ -7,7 +7,7 @@ type AppFrameProps = {
 
 export function AppFrame({ children, className = "" }: AppFrameProps) {
   return (
-    <div className={`mx-auto min-h-screen w-full max-w-[390px] bg-white ${className}`}>
+    <div className={`mx-auto min-h-screen w-full max-w-app bg-white ${className}`}>
       {children}
     </div>
   );
