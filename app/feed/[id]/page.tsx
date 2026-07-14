@@ -72,7 +72,7 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               postId={post.id}
             />
 
-            <p className="mt-[5px] flex items-center text-xs leading-4 text-black">
+            <p className="mt-[5px] flex items-center text-[10px] leading-3 text-black">
               <span className="relative mr-2 flex w-[29px] shrink-0">
                 <ProfileAvatar className="border border-white" size={22} />
                 <ProfileAvatar className="-ml-[15px] border border-white" size={22} />

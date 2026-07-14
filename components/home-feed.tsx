@@ -314,15 +314,15 @@ function FeedPostArticle({
           />
         </div>
         <div className="mt-[5px]">
-          <p className="flex items-center text-xs leading-4 text-black">
+          <p className="flex items-center text-[10px] leading-3 text-black">
             <span className="relative mr-2 flex w-[29px] shrink-0">
               <ProfileAvatar className="border border-white" size={22} />
               <ProfileAvatar className="-ml-[15px] border border-white" size={22} />
             </span>
             <span>{post.likedBy}</span>
           </p>
-          <p className="mt-3 text-sm font-normal leading-[18px] text-black">
-            <Link className="font-semibold" href={post.artist.href}>
+          <p className="mt-2 text-[10px] font-medium leading-3 text-black">
+            <Link className="font-bold" href={post.artist.href}>
               {post.artist.username}
             </Link>{" "}
             <Link href={post.href}>{post.body}</Link>

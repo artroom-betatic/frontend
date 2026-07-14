@@ -8,10 +8,7 @@ import {
   type SettingsListItemIconName,
 } from "@/components/settings-list-item";
 import { UiCard } from "@/components/ui-card";
-import {
-  clearStoredProfileImage,
-  saveStoredProfileImage,
-} from "@/lib/my-profile";
+import { saveStoredProfileImage } from "@/lib/my-profile";
 import type { ArtistProfile } from "@/lib/feed-types";
 import {
   clearRouteToast,
@@ -117,14 +114,6 @@ export function MyPageClient({ profile }: MyPageClientProps) {
     reader.readAsDataURL(file);
   };
 
-  const resetImage = () => {
-    clearStoredProfileImage();
-    setStatusMessage("기본 이미지로 되돌렸습니다.");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   useEffect(() => {
     if (!toastMessage) {
       return;
@@ -173,12 +162,12 @@ export function MyPageClient({ profile }: MyPageClientProps) {
           type="file"
         />
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <ActionButton onClick={() => fileInputRef.current?.click()}>
+        <div className="mt-5">
+          <ActionButton
+            className="w-full"
+            onClick={() => fileInputRef.current?.click()}
+          >
             이미지 변경
-          </ActionButton>
-          <ActionButton onClick={resetImage} variant="secondary">
-            기본 이미지
           </ActionButton>
         </div>
 
