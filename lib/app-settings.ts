@@ -14,11 +14,13 @@ export type ContentDisplayMode =
   | "membership";
 export type EngagementCountDisplayMode = "hide" | "show";
 export type AccountVisibilityMode = "private" | "public";
+export type FollowListVisibilityMode = "private" | "public";
 
 export type AppSettings = {
   accountVisibility: AccountVisibilityMode;
   contentDisplay: ContentDisplayMode;
   engagementCountDisplay: EngagementCountDisplayMode;
+  followListVisibility: FollowListVisibilityMode;
   themeMode: AppThemeMode;
 };
 
@@ -29,6 +31,7 @@ export const defaultAppSettings: AppSettings = {
   accountVisibility: "public",
   contentDisplay: "balanced",
   engagementCountDisplay: "show",
+  followListVisibility: "public",
   themeMode: "system",
 };
 
@@ -140,6 +143,23 @@ export const accountVisibilityOptions = [
   label: string;
 }[];
 
+export const followListVisibilityOptions = [
+  {
+    description: "팔로워와 팔로잉 목록을 다른 사용자가 볼 수 있습니다.",
+    id: "public",
+    label: "공개",
+  },
+  {
+    description: "팔로워와 팔로잉 목록을 내 화면에서만 볼 수 있게 숨깁니다.",
+    id: "private",
+    label: "숨김",
+  },
+] satisfies {
+  description: string;
+  id: FollowListVisibilityMode;
+  label: string;
+}[];
+
 const themeModes = new Set<AppThemeMode>(["system", "light", "dark"]);
 const contentDisplayModes = new Set<ContentDisplayMode>([
   "balanced",
@@ -152,6 +172,10 @@ const engagementCountDisplayModes = new Set<EngagementCountDisplayMode>([
   "show",
 ]);
 const accountVisibilityModes = new Set<AccountVisibilityMode>([
+  "private",
+  "public",
+]);
+const followListVisibilityModes = new Set<FollowListVisibilityMode>([
   "private",
   "public",
 ]);
@@ -247,11 +271,17 @@ function normalizeAppSettings(value: unknown): AppSettings {
   )
     ? (value.accountVisibility as AccountVisibilityMode)
     : defaultAppSettings.accountVisibility;
+  const followListVisibility = followListVisibilityModes.has(
+    value.followListVisibility as FollowListVisibilityMode,
+  )
+    ? (value.followListVisibility as FollowListVisibilityMode)
+    : defaultAppSettings.followListVisibility;
 
   return {
     accountVisibility,
     contentDisplay,
     engagementCountDisplay,
+    followListVisibility,
     themeMode,
   };
 }

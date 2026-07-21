@@ -20,12 +20,17 @@ export type UserReport = {
 export type UserActionSnapshot = {
   blockedUsernames: string[];
   bookmarkedPostIds: string[];
+  deletedArtworkSlugs: string[];
+  deletedFeedPostIds: string[];
+  deletedSeriesSlugs: string[];
   feedCommentSettingsByPostId: Record<string, FeedCommentSettings>;
   commentsByPostId: Record<string, StoredFeedComment[]>;
   feedInterestByPostId: Record<string, FeedPostInterest>;
   feedReportsByPostId: Record<string, UserReport>;
   followingByUsername: Record<string, boolean>;
   likedPostIds: string[];
+  privateFeedPostIds: string[];
+  removedFollowerUsernames: string[];
   userReportsByUsername: Record<string, UserReport>;
 };
 
@@ -35,12 +40,17 @@ export const USER_ACTIONS_UPDATED_EVENT = "artroom:user-actions-updated";
 export const defaultUserActionSnapshot: UserActionSnapshot = {
   blockedUsernames: [],
   bookmarkedPostIds: [],
+  deletedArtworkSlugs: [],
+  deletedFeedPostIds: [],
+  deletedSeriesSlugs: [],
   feedCommentSettingsByPostId: {},
   commentsByPostId: {},
   feedInterestByPostId: {},
   feedReportsByPostId: {},
   followingByUsername: {},
   likedPostIds: [],
+  privateFeedPostIds: [],
+  removedFollowerUsernames: [],
   userReportsByUsername: {},
 };
 
@@ -197,6 +207,9 @@ function normalizeUserActions(value: unknown): UserActionSnapshot {
   return {
     blockedUsernames: normalizeStringList(value.blockedUsernames),
     bookmarkedPostIds: normalizeStringList(value.bookmarkedPostIds),
+    deletedArtworkSlugs: normalizeStringList(value.deletedArtworkSlugs),
+    deletedFeedPostIds: normalizeStringList(value.deletedFeedPostIds),
+    deletedSeriesSlugs: normalizeStringList(value.deletedSeriesSlugs),
     commentsByPostId: normalizeCommentsByPostId(value.commentsByPostId),
     feedCommentSettingsByPostId: normalizeFeedCommentSettingsByPostId(
       value.feedCommentSettingsByPostId,
@@ -207,6 +220,10 @@ function normalizeUserActions(value: unknown): UserActionSnapshot {
     feedReportsByPostId: normalizeReportMap(value.feedReportsByPostId),
     followingByUsername: normalizeFollowingByUsername(value.followingByUsername),
     likedPostIds: normalizeStringList(value.likedPostIds),
+    privateFeedPostIds: normalizeStringList(value.privateFeedPostIds),
+    removedFollowerUsernames: normalizeStringList(
+      value.removedFollowerUsernames,
+    ),
     userReportsByUsername: normalizeReportMap(value.userReportsByUsername),
   };
 }
@@ -394,6 +411,41 @@ export function isUsernameReported(
   return Boolean(snapshot.userReportsByUsername[username]);
 }
 
+export function isFeedPostDeleted(
+  snapshot: UserActionSnapshot,
+  postId: string,
+) {
+  return snapshot.deletedFeedPostIds.includes(postId);
+}
+
+export function isArtworkDeleted(
+  snapshot: UserActionSnapshot,
+  artworkSlug: string,
+) {
+  return snapshot.deletedArtworkSlugs.includes(artworkSlug);
+}
+
+export function isSeriesDeleted(
+  snapshot: UserActionSnapshot,
+  seriesSlug: string,
+) {
+  return snapshot.deletedSeriesSlugs.includes(seriesSlug);
+}
+
+export function isFeedPostPrivate(
+  snapshot: UserActionSnapshot,
+  postId: string,
+) {
+  return snapshot.privateFeedPostIds.includes(postId);
+}
+
+export function isFollowerRemoved(
+  snapshot: UserActionSnapshot,
+  username: string,
+) {
+  return snapshot.removedFollowerUsernames.includes(username);
+}
+
 export function toggleFeedPostLike(postId: string) {
   updateUserActionSnapshot((snapshot) => ({
     ...snapshot,
@@ -405,6 +457,53 @@ export function toggleFeedPostBookmark(postId: string) {
   updateUserActionSnapshot((snapshot) => ({
     ...snapshot,
     bookmarkedPostIds: toggleId(snapshot.bookmarkedPostIds, postId),
+  }));
+}
+
+export function deleteFeedPost(postId: string) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    bookmarkedPostIds: snapshot.bookmarkedPostIds.filter(
+      (currentPostId) => currentPostId !== postId,
+    ),
+    deletedFeedPostIds: Array.from(
+      new Set([...snapshot.deletedFeedPostIds, postId]),
+    ),
+    likedPostIds: snapshot.likedPostIds.filter(
+      (currentPostId) => currentPostId !== postId,
+    ),
+    privateFeedPostIds: snapshot.privateFeedPostIds.filter(
+      (currentPostId) => currentPostId !== postId,
+    ),
+  }));
+}
+
+export function deleteArtwork(artworkSlug: string) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    deletedArtworkSlugs: Array.from(
+      new Set([...snapshot.deletedArtworkSlugs, artworkSlug]),
+    ),
+  }));
+}
+
+export function deleteSeries(seriesSlug: string) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    deletedSeriesSlugs: Array.from(
+      new Set([...snapshot.deletedSeriesSlugs, seriesSlug]),
+    ),
+  }));
+}
+
+export function setFeedPostPrivate(postId: string, privatePost: boolean) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    privateFeedPostIds: privatePost
+      ? Array.from(new Set([...snapshot.privateFeedPostIds, postId]))
+      : snapshot.privateFeedPostIds.filter(
+          (currentPostId) => currentPostId !== postId,
+        ),
   }));
 }
 
@@ -504,6 +603,21 @@ export function setArtistFollowing(username: string, following: boolean) {
   }));
 }
 
+export function removeFollower(username: string, unfollow = false) {
+  updateUserActionSnapshot((snapshot) => ({
+    ...snapshot,
+    followingByUsername: unfollow
+      ? {
+          ...snapshot.followingByUsername,
+          [username]: false,
+        }
+      : snapshot.followingByUsername,
+    removedFollowerUsernames: Array.from(
+      new Set([...snapshot.removedFollowerUsernames, username]),
+    ),
+  }));
+}
+
 export function setUsernameBlocked(username: string, blocked: boolean) {
   updateUserActionSnapshot((snapshot) => ({
     ...snapshot,
@@ -518,6 +632,9 @@ export function setUsernameBlocked(username: string, blocked: boolean) {
           [username]: false,
         }
       : snapshot.followingByUsername,
+    removedFollowerUsernames: blocked
+      ? Array.from(new Set([...snapshot.removedFollowerUsernames, username]))
+      : snapshot.removedFollowerUsernames,
   }));
 }
 

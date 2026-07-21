@@ -1,19 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
+  deleteFeedPost,
   defaultUserActionSnapshot,
   getFeedPostInterest,
+  isFeedPostPrivate,
   isFeedPostReported,
   isUsernameBlocked,
   isUsernameReported,
   readUserActionSnapshot,
   setFeedPostInterest,
+  setFeedPostPrivate,
   setUsernameBlocked,
   subscribeUserActionsChange,
 } from "@/lib/user-actions";
 import type { FeedPostInterest } from "@/lib/user-actions";
+import {
+  removeLocalFeedPost,
+  setLocalFeedPostVisibility,
+} from "@/lib/local-feed-posts";
 import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 
 type FeedInterestControlsProps = {
@@ -74,6 +82,8 @@ export function FeedInterestControls({
 type FeedInterestMenuProps = {
   artistUsername: string;
   className?: string;
+  deleteRedirectHref?: string;
+  initialPrivate?: boolean;
   postId: string;
 };
 
@@ -95,8 +105,11 @@ function MoreIcon() {
 export function FeedInterestMenu({
   artistUsername,
   className = "",
+  deleteRedirectHref,
+  initialPrivate = false,
   postId,
 }: FeedInterestMenuProps) {
+  const router = useRouter();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const actionSnapshot = useSyncExternalStore(
@@ -108,7 +121,9 @@ export function FeedInterestMenu({
   const feedReported = isFeedPostReported(actionSnapshot, postId);
   const accountReported = isUsernameReported(actionSnapshot, artistUsername);
   const accountBlocked = isUsernameBlocked(actionSnapshot, artistUsername);
+  const privatePost = initialPrivate || isFeedPostPrivate(actionSnapshot, postId);
   const isOwnAccount = artistUsername === MY_PROFILE_USERNAME;
+  const isLocalPost = postId.startsWith("local-feed-");
   const feedReportHref = `/report?type=feed&postId=${encodeURIComponent(
     postId,
   )}&username=${encodeURIComponent(artistUsername)}`;
@@ -142,6 +157,34 @@ export function FeedInterestMenu({
   const toggleAccountBlock = () => {
     setUsernameBlocked(artistUsername, !accountBlocked);
     setOpen(false);
+  };
+  const togglePostVisibility = () => {
+    const nextPrivate = !privatePost;
+
+    if (isLocalPost) {
+      setLocalFeedPostVisibility(postId, nextPrivate ? "private" : "public");
+    } else {
+      setFeedPostPrivate(postId, nextPrivate);
+    }
+
+    setOpen(false);
+  };
+  const deletePost = () => {
+    if (!window.confirm("정말 삭제할 것입니까?")) {
+      return;
+    }
+
+    if (isLocalPost) {
+      removeLocalFeedPost(postId);
+    } else {
+      deleteFeedPost(postId);
+    }
+
+    setOpen(false);
+
+    if (deleteRedirectHref) {
+      router.push(deleteRedirectHref);
+    }
   };
 
   return (
@@ -182,6 +225,26 @@ export function FeedInterestMenu({
               </button>
             );
           })}
+          {isOwnAccount ? (
+            <div className="border-t border-line">
+              <button
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-foreground"
+                onClick={togglePostVisibility}
+                role="menuitem"
+                type="button"
+              >
+                <span>{privatePost ? "공개로 전환" : "비공개로 전환"}</span>
+              </button>
+              <button
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-foreground"
+                onClick={deletePost}
+                role="menuitem"
+                type="button"
+              >
+                <span>피드 삭제</span>
+              </button>
+            </div>
+          ) : null}
           {!isOwnAccount ? (
             <div className="border-t border-line">
               <Link

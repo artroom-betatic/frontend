@@ -6,6 +6,7 @@ import {
   contentDisplayOptions,
   defaultAppSettings,
   engagementCountDisplayOptions,
+  followListVisibilityOptions,
   readAppSettings,
   subscribeAppSettingsChange,
   themeModeOptions,
@@ -14,6 +15,7 @@ import {
   type AppThemeMode,
   type ContentDisplayMode,
   type EngagementCountDisplayMode,
+  type FollowListVisibilityMode,
 } from "@/lib/app-settings";
 import { ScreenSection } from "./screen-section";
 import {
@@ -95,6 +97,13 @@ export function AppSettingsClient() {
       ) ?? accountVisibilityOptions[0],
     [settings.accountVisibility],
   );
+  const selectedFollowListVisibilityOption = useMemo(
+    () =>
+      followListVisibilityOptions.find(
+        (option) => option.id === settings.followListVisibility,
+      ) ?? followListVisibilityOptions[0],
+    [settings.followListVisibility],
+  );
 
   const updateThemeMode = (themeMode: AppThemeMode) => {
     updateAppSettings({ themeMode });
@@ -118,6 +127,13 @@ export function AppSettingsClient() {
   ) => {
     updateAppSettings({ accountVisibility });
     setStatusMessage("계정 공개 범위가 저장되었습니다.");
+  };
+
+  const updateFollowListVisibility = (
+    followListVisibility: FollowListVisibilityMode,
+  ) => {
+    updateAppSettings({ followListVisibility });
+    setStatusMessage("팔로워/팔로잉 목록 공개 범위가 저장되었습니다.");
   };
 
   return (
@@ -280,6 +296,49 @@ export function AppSettingsClient() {
                     }`}
                     key={option.id}
                     onClick={() => updateAccountVisibility(option.id)}
+                    type="button"
+                  >
+                    <span className="block text-sm font-semibold text-foreground">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-subtle">
+                      {option.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </UiCard>
+
+          <UiCard className="bg-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-subtle">
+                  팔로워/팔로잉 목록
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {selectedFollowListVisibilityOption.label}
+                </p>
+              </div>
+              <span className="rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
+                프로필
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {followListVisibilityOptions.map((option) => {
+                const active = settings.followListVisibility === option.id;
+
+                return (
+                  <button
+                    aria-pressed={active}
+                    className={`rounded-md border px-3 py-3 text-left transition-colors ${
+                      active
+                        ? "border-primary bg-primary/10"
+                        : "border-line bg-panel"
+                    }`}
+                    key={option.id}
+                    onClick={() => updateFollowListVisibility(option.id)}
                     type="button"
                   >
                     <span className="block text-sm font-semibold text-foreground">

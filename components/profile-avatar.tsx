@@ -7,12 +7,17 @@ type ProfileAvatarProps = {
 
 export function ProfileAvatar({ size = 40, className = "" }: ProfileAvatarProps) {
   return (
-    <Image
-      alt=""
-      className={`rounded-full object-cover ${className}`}
-      height={size}
-      src="/figma/profile.png"
-      width={size}
-    />
+    <span
+      className={`relative inline-block shrink-0 overflow-hidden rounded-full ${className}`}
+      style={{ height: size, width: size }}
+    >
+      <Image
+        alt=""
+        className="object-cover"
+        fill
+        sizes={`${size}px`}
+        src="/figma/profile.png"
+      />
+    </span>
   );
 }

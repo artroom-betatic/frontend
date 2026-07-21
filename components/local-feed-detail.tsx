@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { FeedCommentsSection } from "@/components/feed-comments-section";
 import { FeedInterestMenu } from "@/components/feed-interest-controls";
 import { FeedLikedByLine } from "@/components/feed-liked-by-line";
+import { FeedMediaCarousel } from "@/components/feed-media-carousel";
 import { PostActions } from "@/components/post-actions";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { UiCard } from "@/components/ui-card";
@@ -64,25 +64,32 @@ export function LocalFeedDetail({ feedId }: LocalFeedDetailProps) {
               </p>
               <p className="mt-0.5 text-2xs font-medium text-muted">
                 @{post.artist.username} · {post.createdAtLabel}
+                {post.visibility === "private" ? " · 비공개" : ""}
               </p>
+              {post.collaborators?.length ? (
+                <p className="mt-0.5 truncate text-2xs font-semibold text-primary">
+                  함께한 작가{" "}
+                  {post.collaborators
+                    .map((collaborator) => `@${collaborator.username}`)
+                    .join(", ")}
+                </p>
+              ) : null}
             </div>
           </Link>
           <FeedInterestMenu
             artistUsername={post.artist.username}
+            deleteRedirectHref="/"
+            initialPrivate={post.visibility === "private"}
             postId={post.id}
           />
         </div>
 
-        <div className="relative h-feed-media w-full overflow-hidden bg-panel">
-          <Image
-            alt={post.imageAlt}
-            className="object-cover"
-            fill
-            priority
-            sizes="390px"
-            src={post.imageSrc}
-          />
-        </div>
+        <FeedMediaCarousel
+          imageAlt={post.imageAlt}
+          imageSlides={post.imageSlides}
+          imageSrc={post.imageSrc}
+          priority
+        />
 
         <div className="bg-white px-4 py-4">
           <PostActions

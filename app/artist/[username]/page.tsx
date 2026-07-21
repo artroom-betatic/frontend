@@ -2,21 +2,21 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppFrame } from "@/components/app-frame";
-import { ArtistFeedCard } from "@/components/artist-feed-card";
 import { ArtistActions } from "@/components/artist-actions";
+import { ArtistProfileStats } from "@/components/artist-profile-stats";
+import { ArtistProfileTabs } from "@/components/artist-profile-tabs";
 import { BottomNav } from "@/components/bottom-nav";
-import { ContentListCard } from "@/components/content-list-card";
 import { CreatorCommissionPublicCard } from "@/components/creator-commission-public-card";
+import { FollowListDialog } from "@/components/follow-list-dialog";
 import { MobileHeader } from "@/components/mobile-header";
 import { ProfileBioText } from "@/components/profile-bio-text";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { SeriesCard } from "@/components/series-card";
-import { UiCard } from "@/components/ui-card";
 import {
   artworkDetails,
   commissionOfferDetails,
   getArtistSeries,
 } from "@/lib/catalog-data";
+import { getArtistProfiles, getArtistSocialGraph } from "@/lib/feed-data";
 import { getArtistResource } from "@/lib/server-data";
 import { getTagSearchHref } from "@/lib/tag-search";
 
@@ -44,6 +44,8 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
   }
 
   const { posts, profile } = resource;
+  const socialGraph = getArtistSocialGraph(profile.username);
+  const allProfiles = getArtistProfiles();
   const profileArtworks = artworkDetails.filter(
     (artwork) => artwork.creator.username === profile.username,
   );
@@ -51,17 +53,16 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
     (commission) => commission.creator.username === profile.username,
   );
   const profileSeries = getArtistSeries(profile.username);
-  const feedListHref = `/artist/${encodeURIComponent(profile.username)}/feeds`;
-  const seriesListHref = `/artist/${encodeURIComponent(profile.username)}/series`;
-  const artworkSearchHref = `/search?type=artwork&q=${encodeURIComponent(
-    profile.username,
-  )}`;
   const profileEntrypoints = [
-    ...profileArtworks.slice(0, 1).map(() => ({
-      description: `등록된 작품 ${profileArtworks.length}개`,
-      href: "#profile-artworks",
-      title: "작품 보기",
-    })),
+    ...(profile.stats.works > 0
+      ? [
+          {
+            description: `등록된 작품 ${profile.stats.works}개`,
+            href: "#profile-content",
+            title: "작품 보기",
+          },
+        ]
+      : []),
     ...profileCommissions.slice(0, 1).map(() => ({
       description: `열려 있는 커미션 ${profileCommissions.length}개`,
       href: "#profile-commissions",
@@ -87,9 +88,12 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
               <p className="mt-1 text-xs font-medium text-muted">
                 @{profile.username}
               </p>
-              <p className="mt-2 text-xs font-medium text-primary">
-                {profile.followersLabel}
-              </p>
+              <FollowListDialog
+                allProfiles={allProfiles}
+                ownerDisplayName={profile.displayName}
+                ownerUsername={profile.username}
+                socialGraph={socialGraph}
+              />
             </div>
           </div>
 
@@ -103,7 +107,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
           <div className="mt-4 flex flex-wrap gap-1.5">
             {profile.tags.map((tag) => (
               <Link
-                className="flex min-h-7 items-center justify-center rounded-md bg-panel px-2 py-1.5 text-sm font-semibold leading-none text-subtle"
+                className="flex min-h-7 items-center justify-center rounded-md bg-white px-2 py-1.5 text-sm font-semibold leading-none text-subtle transition-colors hover:bg-panel"
                 href={getTagSearchHref(tag)}
                 key={tag}
               >
@@ -112,26 +116,18 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
             ))}
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            <UiCard className="p-3 text-center">
-              <p className="text-lg font-bold">{profile.stats.posts}</p>
-              <p className="mt-1 text-2xs text-muted">게시물</p>
-            </UiCard>
-            <UiCard className="p-3 text-center">
-              <p className="text-lg font-bold">{profile.stats.works}</p>
-              <p className="mt-1 text-2xs text-muted">작품</p>
-            </UiCard>
-            <UiCard className="p-3 text-center">
-              <p className="text-lg font-bold">{profile.stats.commissions}</p>
-              <p className="mt-1 text-2xs text-muted">커미션</p>
-            </UiCard>
-          </div>
+          <ArtistProfileStats
+            artworks={profileArtworks}
+            commissionsCount={profileCommissions.length}
+            posts={posts}
+            profile={profile}
+          />
 
           {profileEntrypoints.length ? (
             <div className="mt-5 grid gap-2">
               {profileEntrypoints.map((entrypoint) => (
                 <Link
-                  className="flex items-center justify-between gap-3 rounded-md border border-line bg-panel p-3"
+                  className="flex items-center justify-between gap-3 rounded-md bg-white p-3 transition-colors hover:bg-panel"
                   href={entrypoint.href}
                   key={entrypoint.title}
                 >
@@ -158,60 +154,13 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
           />
         </section>
 
-        {profileArtworks.length ? (
-          <section className="mt-2 bg-white px-6 py-5" id="profile-artworks">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">작품</h2>
-              <Link
-                className="text-xs font-semibold text-primary"
-                href={artworkSearchHref}
-              >
-                더 보기
-              </Link>
-            </div>
-            <div className="mt-4 grid gap-3">
-              {profileArtworks.map((artwork) => (
-                <ContentListCard
-                  description={artwork.description}
-                  href={artwork.href}
-                  imageAlt={artwork.imageAlt}
-                  imageSrc={artwork.imageSrc}
-                  key={artwork.slug}
-                  subtitle={artwork.priceLabel}
-                  subtitleTone="primary"
-                  title={artwork.title}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {profileSeries.length ? (
-          <section className="mt-2 bg-white px-6 py-5" id="profile-series">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">시리즈</h2>
-              <Link
-                className="text-xs font-semibold text-primary"
-                href={seriesListHref}
-              >
-                더 보기
-              </Link>
-            </div>
-            <div className="mt-4 grid gap-3">
-              {profileSeries.map((series) => (
-                <SeriesCard key={series.slug} series={series} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
         {profileCommissions.length ? (
           <section className="mt-2 bg-white px-6 py-5" id="profile-commissions">
             <h2 className="text-base font-semibold">커미션 안내</h2>
             <div className="mt-4 grid gap-3">
               {profileCommissions.map((commission) => (
                 <Link
-                  className="block rounded-md border border-line bg-white p-3"
+                  className="block rounded-md bg-white p-3 transition-colors hover:bg-panel"
                   href={commission.href}
                   key={commission.slug}
                 >
@@ -235,22 +184,14 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
           username={profile.username}
         />
 
-        <section className="mt-2 bg-white px-6 py-5" id="profile-feed">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">최근 피드</h2>
-            <Link
-              className="text-xs font-semibold text-primary"
-              href={feedListHref}
-            >
-              더 보기
-            </Link>
-          </div>
-          <div className="mt-4 grid gap-3">
-            {posts.map((post) => (
-              <ArtistFeedCard key={post.id} post={post} />
-            ))}
-          </div>
-        </section>
+        <div id="profile-content">
+          <ArtistProfileTabs
+            artworks={profileArtworks}
+            posts={posts}
+            profile={profile}
+            series={profileSeries}
+          />
+        </div>
       </main>
       <BottomNav />
     </AppFrame>
