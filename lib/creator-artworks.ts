@@ -64,11 +64,14 @@ export const defaultCreatorArtworks: CreatorArtwork[] = [
   },
 ];
 
+const emptyCreatorArtworks: CreatorArtwork[] = [];
+const emptyDeletedCreatorArtworkIds: string[] = [];
+
 let cachedCreatorArtworksString: string | null = null;
-let cachedStoredCreatorArtworks: CreatorArtwork[] = [];
+let cachedStoredCreatorArtworks: CreatorArtwork[] = emptyCreatorArtworks;
 let cachedCreatorArtworksSnapshot: CreatorArtwork[] = defaultCreatorArtworks;
 let cachedDeletedCreatorArtworkIdsString: string | null = null;
-let cachedDeletedCreatorArtworkIds: string[] = [];
+let cachedDeletedCreatorArtworkIds: string[] = emptyDeletedCreatorArtworkIds;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -124,7 +127,7 @@ function normalizeDeletedCreatorArtworkIds(value: unknown) {
 
 function readDeletedCreatorArtworkIds() {
   if (typeof window === "undefined") {
-    return [];
+    return emptyDeletedCreatorArtworkIds;
   }
 
   const storedIds = window.localStorage.getItem(
@@ -133,8 +136,8 @@ function readDeletedCreatorArtworkIds() {
 
   if (!storedIds) {
     cachedDeletedCreatorArtworkIdsString = null;
-    cachedDeletedCreatorArtworkIds = [];
-    return [];
+    cachedDeletedCreatorArtworkIds = emptyDeletedCreatorArtworkIds;
+    return cachedDeletedCreatorArtworkIds;
   }
 
   if (storedIds === cachedDeletedCreatorArtworkIdsString) {
@@ -150,9 +153,29 @@ function readDeletedCreatorArtworkIds() {
     return nextIds;
   } catch {
     cachedDeletedCreatorArtworkIdsString = storedIds;
-    cachedDeletedCreatorArtworkIds = [];
-    return [];
+    cachedDeletedCreatorArtworkIds = emptyDeletedCreatorArtworkIds;
+    return cachedDeletedCreatorArtworkIds;
   }
+}
+
+function getVisibleDefaultArtworks(deletedIds: string[]) {
+  if (!deletedIds.length) {
+    return defaultCreatorArtworks;
+  }
+
+  return defaultCreatorArtworks.filter(
+    (artwork) => !deletedIds.includes(artwork.id),
+  );
+}
+
+function syncCreatorArtworksSnapshot(storedArtworks: CreatorArtwork[]) {
+  const visibleDefaultArtworks = getVisibleDefaultArtworks(
+    readDeletedCreatorArtworkIds(),
+  );
+
+  cachedCreatorArtworksSnapshot = storedArtworks.length
+    ? [...visibleDefaultArtworks, ...storedArtworks]
+    : visibleDefaultArtworks;
 }
 
 function saveDeletedCreatorArtworkIds(ids: string[]) {
@@ -165,6 +188,7 @@ function saveDeletedCreatorArtworkIds(ids: string[]) {
   );
   cachedDeletedCreatorArtworkIdsString = nextIdsString;
   cachedDeletedCreatorArtworkIds = nextIds;
+  syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
   window.dispatchEvent(new CustomEvent(CREATOR_ARTWORKS_UPDATED_EVENT));
 }
 
@@ -179,11 +203,9 @@ function readStoredCreatorArtworks(): CreatorArtwork[] {
 
   if (!storedArtworks) {
     cachedCreatorArtworksString = null;
-    cachedStoredCreatorArtworks = [];
-    cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
-      (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
-    );
-    return [];
+    cachedStoredCreatorArtworks = emptyCreatorArtworks;
+    syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
+    return cachedStoredCreatorArtworks;
   }
 
   if (storedArtworks === cachedCreatorArtworksString) {
@@ -195,11 +217,9 @@ function readStoredCreatorArtworks(): CreatorArtwork[] {
 
     if (!Array.isArray(parsedArtworks)) {
       cachedCreatorArtworksString = storedArtworks;
-      cachedStoredCreatorArtworks = [];
-      cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
-        (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
-      );
-      return [];
+      cachedStoredCreatorArtworks = emptyCreatorArtworks;
+      syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
+      return cachedStoredCreatorArtworks;
     }
 
     const nextArtworks = parsedArtworks
@@ -208,38 +228,24 @@ function readStoredCreatorArtworks(): CreatorArtwork[] {
 
     cachedCreatorArtworksString = storedArtworks;
     cachedStoredCreatorArtworks = nextArtworks;
-    const deletedIds = readDeletedCreatorArtworkIds();
-    const visibleDefaultArtworks = defaultCreatorArtworks.filter(
-      (artwork) => !deletedIds.includes(artwork.id),
-    );
-
-    cachedCreatorArtworksSnapshot = nextArtworks.length
-      ? [...visibleDefaultArtworks, ...nextArtworks]
-      : visibleDefaultArtworks;
+    syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
 
     return nextArtworks;
   } catch {
     cachedCreatorArtworksString = storedArtworks;
-    cachedStoredCreatorArtworks = [];
-    cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
-      (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
-    );
-    return [];
+    cachedStoredCreatorArtworks = emptyCreatorArtworks;
+    syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
+    return cachedStoredCreatorArtworks;
   }
 }
 
 function saveStoredCreatorArtworks(artworks: CreatorArtwork[]) {
   const nextArtworksString = JSON.stringify(artworks);
-  const visibleDefaultArtworks = defaultCreatorArtworks.filter(
-    (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
-  );
 
   window.localStorage.setItem(CREATOR_ARTWORKS_STORAGE_KEY, nextArtworksString);
   cachedCreatorArtworksString = nextArtworksString;
   cachedStoredCreatorArtworks = artworks;
-  cachedCreatorArtworksSnapshot = artworks.length
-    ? [...visibleDefaultArtworks, ...artworks]
-    : visibleDefaultArtworks;
+  syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
   window.dispatchEvent(new CustomEvent(CREATOR_ARTWORKS_UPDATED_EVENT));
 }
 
@@ -256,11 +262,17 @@ export function readCreatorArtworks() {
   );
 
   if (!storedArtworks) {
+    if (
+      cachedCreatorArtworksString === null &&
+      cachedStoredCreatorArtworks === emptyCreatorArtworks &&
+      storedDeletedIds === cachedDeletedCreatorArtworkIdsString
+    ) {
+      return cachedCreatorArtworksSnapshot;
+    }
+
     cachedCreatorArtworksString = null;
-    cachedStoredCreatorArtworks = [];
-    cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
-      (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
-    );
+    cachedStoredCreatorArtworks = emptyCreatorArtworks;
+    syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
     return cachedCreatorArtworksSnapshot;
   }
 
@@ -272,6 +284,10 @@ export function readCreatorArtworks() {
   }
 
   readStoredCreatorArtworks();
+
+  if (storedDeletedIds !== cachedDeletedCreatorArtworkIdsString) {
+    syncCreatorArtworksSnapshot(cachedStoredCreatorArtworks);
+  }
 
   return cachedCreatorArtworksSnapshot;
 }
