@@ -41,7 +41,7 @@ export function ContentListCard({
   const card = (
     <UiCard className={`bg-white ${className}`}>
       <div className="flex items-start gap-3">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-panel">
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-white">
           <Image
             alt={imageAlt}
             className="object-cover"
@@ -71,7 +71,7 @@ export function ContentListCard({
               ) : null}
             </div>
             {badge ? (
-              <span className="shrink-0 rounded-md bg-panel px-2 py-1 text-2xs font-semibold text-primary">
+              <span className="shrink-0 rounded-md bg-white px-2 py-1 text-2xs font-semibold text-primary">
                 {badge}
               </span>
             ) : null}

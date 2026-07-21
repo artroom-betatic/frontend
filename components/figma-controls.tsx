@@ -95,7 +95,7 @@ export function FigmaTag({
   ...props
 }: FigmaTagProps) {
   const tagClassName = `flex h-7.5 items-center justify-center rounded-md px-2 py-1.5 text-sm font-semibold leading-none ${
-    active ? "bg-primary text-white" : "bg-panel text-subtle"
+    active ? "bg-primary text-white" : "bg-white text-subtle"
   } ${className}`;
 
   if (as === "button") {

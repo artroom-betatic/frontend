@@ -1,11 +1,15 @@
 import type {
   ArtistProfile,
   ArtistSummary,
+  ArtistSocialGraph,
   FeedPageRequest,
   FeedPageResponse,
   FeedPost,
 } from "./feed-types";
 import { sortFeedPostsByContentDisplay } from "./app-settings";
+import { artworkDetails, commissionOfferDetails } from "./catalog-data";
+import { defaultCreatorArtworks } from "./creator-artworks";
+import { MY_PROFILE_USERNAME } from "./my-profile";
 
 const avatarSrc = "/figma/profile.png";
 const postImageSrc = "/figma/home-post.png";
@@ -34,11 +38,11 @@ const artists: ArtistProfile[] = [
     bio: "감정선이 살아있는 캐릭터 일러스트와 판타지 세계관 작업을 올립니다.",
     coverTitle: "판타지 일러스트 / 멤버십 운영",
     displayName: "작가의 이름",
-    followersLabel: "팔로워 1.2만",
+    followersLabel: "팔로워 4",
     href: artistHref("user_123"),
     isFollowing: true,
     membershipLabel: "프리미엄 멤버십",
-    stats: { commissions: 8, posts: 128, works: 24 },
+    stats: { commissions: 0, posts: 2, works: 2 },
     tags: ["#판타지", "#캐릭터", "#멤버십"],
     username: "user_123",
   },
@@ -47,11 +51,11 @@ const artists: ArtistProfile[] = [
     bio: "일상툰과 따뜻한 색감의 창작 캐릭터를 연재합니다.",
     coverTitle: "인스타툰 / 창작 캐릭터",
     displayName: "nori_n_sullgi",
-    followersLabel: "팔로워 0.9만",
+    followersLabel: "팔로워 4",
     href: artistHref("nori_n_sullgi"),
     isFollowing: true,
     membershipLabel: "월간 후원",
-    stats: { commissions: 3, posts: 94, works: 17 },
+    stats: { commissions: 0, posts: 1, works: 0 },
     tags: ["#인스타툰", "#일러스트", "#후원"],
     username: "nori_n_sullgi",
   },
@@ -60,11 +64,11 @@ const artists: ArtistProfile[] = [
     bio: "SNS 프로필, 굿즈, SD 캐릭터 커미션을 중심으로 작업합니다.",
     coverTitle: "커미션 가능 / 굿즈 제작",
     displayName: "inme__diary",
-    followersLabel: "팔로워 0.5만",
+    followersLabel: "팔로워 3",
     href: artistHref("inme__diary"),
     isFollowing: false,
     membershipLabel: "커미션 슬롯 오픈",
-    stats: { commissions: 16, posts: 76, works: 12 },
+    stats: { commissions: 1, posts: 2, works: 0 },
     tags: ["#커미션", "#굿즈", "#캐릭터"],
     username: "inme__diary",
   },
@@ -73,11 +77,11 @@ const artists: ArtistProfile[] = [
     bio: "단편 만화와 설정집 Ebook을 판매하는 작가입니다.",
     coverTitle: "Ebook / 단편 만화",
     displayName: "lechointheworld",
-    followersLabel: "팔로워 1만",
+    followersLabel: "팔로워 2",
     href: artistHref("lechointheworld"),
     isFollowing: false,
     membershipLabel: "디지털 작품 판매",
-    stats: { commissions: 2, posts: 142, works: 31 },
+    stats: { commissions: 0, posts: 2, works: 1 },
     tags: ["#Ebook", "#만화", "#세계관"],
     username: "lechointheworld",
   },
@@ -86,11 +90,11 @@ const artists: ArtistProfile[] = [
     bio: "러프 스케치와 빠른 아이디어 드로잉을 자주 공유합니다.",
     coverTitle: "러프 스케치 / 드로잉",
     displayName: "naronaro.i",
-    followersLabel: "팔로워 0.4만",
+    followersLabel: "팔로워 2",
     href: artistHref("naronaro.i"),
     isFollowing: true,
     membershipLabel: "스케치 멤버십",
-    stats: { commissions: 5, posts: 63, works: 9 },
+    stats: { commissions: 0, posts: 1, works: 0 },
     tags: ["#드로잉", "#러프", "#스케치"],
     username: "naronaro.i",
   },
@@ -99,17 +103,52 @@ const artists: ArtistProfile[] = [
     bio: "푸른 색감과 배경 일러스트를 중심으로 작업하는 스튜디오입니다.",
     coverTitle: "배경 일러스트 / 판타지",
     displayName: "blue_studio",
-    followersLabel: "팔로워 0.7만",
+    followersLabel: "팔로워 2",
     href: artistHref("blue_studio"),
     isFollowing: false,
     membershipLabel: "배경 커미션",
-    stats: { commissions: 11, posts: 88, works: 19 },
+    stats: { commissions: 1, posts: 1, works: 0 },
     tags: ["#배경", "#판타지", "#커미션"],
     username: "blue_studio",
   },
 ];
 
 const artistByUsername = new Map(artists.map((artist) => [artist.username, artist]));
+
+const artistSocialUsernames: Record<
+  string,
+  { followers: string[]; following: string[] }
+> = {
+  blue_studio: {
+    followers: ["lechointheworld", "nori_n_sullgi"],
+    following: ["user_123", "nori_n_sullgi", "inme__diary"],
+  },
+  inme__diary: {
+    followers: ["nori_n_sullgi", "blue_studio", "user_123"],
+    following: ["user_123", "nori_n_sullgi", "naronaro.i"],
+  },
+  lechointheworld: {
+    followers: ["blue_studio", "inme__diary"],
+    following: ["user_123", "blue_studio"],
+  },
+  "naronaro.i": {
+    followers: ["user_123", "inme__diary"],
+    following: ["user_123", "nori_n_sullgi"],
+  },
+  nori_n_sullgi: {
+    followers: ["user_123", "inme__diary", "naronaro.i", "blue_studio"],
+    following: ["user_123", "inme__diary"],
+  },
+  user_123: {
+    followers: [
+      "nori_n_sullgi",
+      "inme__diary",
+      "lechointheworld",
+      "blue_studio",
+    ],
+    following: ["nori_n_sullgi", "naronaro.i"],
+  },
+};
 
 const summary = (username: string): ArtistSummary => {
   const artist = artistByUsername.get(username);
@@ -250,6 +289,46 @@ const feedPosts: FeedPost[] = [
   imageSlides: createImageSlides(post.imageAlt, post.imageSrc),
 }));
 
+function countItemsByCreator(
+  items: { creator: { username: string } }[],
+  username: string,
+) {
+  return items.filter((item) => item.creator.username === username).length;
+}
+
+function getFollowerCount(username: string) {
+  return artistSocialUsernames[username]?.followers.length ?? 0;
+}
+
+function getPostCount(username: string) {
+  return feedPosts.filter((post) => post.artist.username === username).length;
+}
+
+function getArtworkCount(username: string) {
+  const creatorArtworkCount =
+    username === MY_PROFILE_USERNAME ? defaultCreatorArtworks.length : 0;
+
+  return countItemsByCreator(artworkDetails, username) + creatorArtworkCount;
+}
+
+function getCommissionCount(username: string) {
+  return countItemsByCreator(commissionOfferDetails, username);
+}
+
+function getDerivedArtistProfile(artist: ArtistProfile): ArtistProfile {
+  return {
+    ...artist,
+    followersLabel: `팔로워 ${getFollowerCount(artist.username).toLocaleString(
+      "ko-KR",
+    )}`,
+    stats: {
+      commissions: getCommissionCount(artist.username),
+      posts: getPostCount(artist.username),
+      works: getArtworkCount(artist.username),
+    },
+  };
+}
+
 export function getFeedPage({
   contentDisplay = "balanced",
   cursor = "0",
@@ -270,11 +349,30 @@ export function getFeedPage({
 }
 
 export function getArtistProfile(username: string) {
-  return artistByUsername.get(username);
+  const artist = artistByUsername.get(username);
+
+  return artist ? getDerivedArtistProfile(artist) : undefined;
 }
 
 export function getArtistProfiles() {
-  return artists;
+  return artists.map(getDerivedArtistProfile);
+}
+
+export function getArtistSocialGraph(username: string): ArtistSocialGraph {
+  const socialUsernames = artistSocialUsernames[username] ?? {
+    followers: [],
+    following: [],
+  };
+  const toProfiles = (usernames: string[]) =>
+    usernames
+      .map((currentUsername) => artistByUsername.get(currentUsername))
+      .filter((artist): artist is ArtistProfile => Boolean(artist))
+      .map((artist) => summary(artist.username));
+
+  return {
+    followers: toProfiles(socialUsernames.followers),
+    following: toProfiles(socialUsernames.following),
+  };
 }
 
 export function getArtistPosts(username: string, limit?: number) {

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -7,6 +6,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { FeedCommentsSection } from "@/components/feed-comments-section";
 import { FeedInterestMenu } from "@/components/feed-interest-controls";
 import { FeedLikedByLine } from "@/components/feed-liked-by-line";
+import { FeedMediaCarousel } from "@/components/feed-media-carousel";
 import { LocalFeedDetail } from "@/components/local-feed-detail";
 import { MobileHeader } from "@/components/mobile-header";
 import { PostActions } from "@/components/post-actions";
@@ -64,20 +64,17 @@ export default async function FeedDetailPage({ params }: FeedDetailPageProps) {
               </Link>
               <FeedInterestMenu
                 artistUsername={post.artist.username}
+                deleteRedirectHref="/"
                 postId={post.id}
               />
             </div>
 
-            <div className="relative h-feed-media w-full overflow-hidden bg-panel">
-              <Image
-                alt={post.imageAlt}
-                className="object-cover"
-                fill
-                priority
-                sizes="390px"
-                src={post.imageSrc}
-              />
-            </div>
+            <FeedMediaCarousel
+              imageAlt={post.imageAlt}
+              imageSlides={post.imageSlides}
+              imageSrc={post.imageSrc}
+              priority
+            />
 
             <div className="bg-white px-4 py-4">
               <PostActions

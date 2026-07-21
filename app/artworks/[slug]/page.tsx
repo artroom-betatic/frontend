@@ -4,11 +4,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppFrame } from "@/components/app-frame";
 import { BottomNav } from "@/components/bottom-nav";
+import { DeleteContentButton } from "@/components/delete-content-button";
 import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ScreenSection } from "@/components/screen-section";
 import { UiCard } from "@/components/ui-card";
 import { getArtworkSlugs } from "@/lib/catalog-data";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 import { getArtworkResource } from "@/lib/server-data";
 
 type ArtworkPageProps = {
@@ -98,6 +100,14 @@ export default async function ArtworkPage({ params }: ArtworkPageProps) {
               작가 프로필
             </Link>
           </div>
+
+          {artwork.creator.username === MY_PROFILE_USERNAME ? (
+            <DeleteContentButton
+              contentId={artwork.slug}
+              contentType="artwork"
+              redirectHref={artwork.creator.href}
+            />
+          ) : null}
         </section>
 
         <div className="px-6">

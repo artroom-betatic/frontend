@@ -13,10 +13,10 @@ export function ActionButton({
 }: ActionButtonProps) {
   const styles = {
     primary: "bg-primary text-white",
-    secondary: "bg-line/20 text-black",
-    danger: "bg-line/20 text-black",
-    follow: "bg-panel text-black",
-    following: "bg-panel text-black",
+    secondary: "bg-white text-black hover:bg-panel",
+    danger: "bg-white text-black hover:bg-panel",
+    follow: "bg-white text-black hover:bg-panel",
+    following: "bg-white text-black hover:bg-panel",
   }[variant];
 
   return (

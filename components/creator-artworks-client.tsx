@@ -11,6 +11,7 @@ import {
   getCreatorArtworkSaleTypeLabel,
   getCreatorArtworkStatusLabel,
   readCreatorArtworks,
+  removeCreatorArtwork,
   subscribeCreatorArtworksChange,
 } from "@/lib/creator-artworks";
 import {
@@ -68,17 +69,29 @@ export function CreatorArtworksClient() {
       <ScreenSection title="작품 목록">
         <div className="grid gap-3">
           {artworks.map((artwork) => (
-            <ContentListCard
-              badge={getCreatorArtworkStatusLabel(artwork.status)}
-              description={artwork.description}
-              imageAlt={artwork.imageAlt}
-              imageSrc={artwork.imageSrc}
-              key={artwork.id}
-              meta={`${getCreatorArtworkSaleTypeLabel(
-                artwork.saleType,
-              )} · ${formatCreatorArtworkPrice(artwork.price)}`}
-              title={artwork.title}
-            />
+            <div className="grid gap-2" key={artwork.id}>
+              <ContentListCard
+                badge={getCreatorArtworkStatusLabel(artwork.status)}
+                description={artwork.description}
+                imageAlt={artwork.imageAlt}
+                imageSrc={artwork.imageSrc}
+                meta={`${getCreatorArtworkSaleTypeLabel(
+                  artwork.saleType,
+                )} · ${formatCreatorArtworkPrice(artwork.price)}`}
+                title={artwork.title}
+              />
+              <button
+                className="justify-self-end rounded-md bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-panel"
+                onClick={() => {
+                  if (window.confirm("정말 삭제할 것입니까?")) {
+                    removeCreatorArtwork(artwork.id);
+                  }
+                }}
+                type="button"
+              >
+                삭제
+              </button>
+            </div>
           ))}
         </div>
       </ScreenSection>

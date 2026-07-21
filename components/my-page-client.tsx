@@ -3,18 +3,31 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ActionButton } from "@/components/action-button";
+import { ArtistProfileTabs } from "@/components/artist-profile-tabs";
+import { FollowListDialog } from "@/components/follow-list-dialog";
 import {
   SettingsListItem,
   type SettingsListItemIconName,
 } from "@/components/settings-list-item";
 import { UiCard } from "@/components/ui-card";
+import type { ArtworkDetail, SeriesDetail } from "@/lib/catalog-data";
+import {
+  defaultCreatorArtworks,
+  readCreatorArtworks,
+  subscribeCreatorArtworksChange,
+} from "@/lib/creator-artworks";
 import {
   readStoredProfileBio,
   saveStoredProfileBio,
   saveStoredProfileImage,
   subscribeProfileBioChange,
 } from "@/lib/my-profile";
-import type { ArtistProfile } from "@/lib/feed-types";
+import type {
+  ArtistProfile,
+  ArtistSocialGraph,
+  ArtistSummary,
+  FeedPost,
+} from "@/lib/feed-types";
 import {
   defaultAppSettings,
   readAppSettings,
@@ -23,6 +36,7 @@ import {
 } from "@/lib/app-settings";
 import {
   defaultUserActionSnapshot,
+  isArtworkDeleted,
   readUserActionSnapshot,
   setUsernameBlocked,
   subscribeUserActionsChange,
@@ -36,17 +50,19 @@ import { getCreatorMembershipMenuItem } from "@/lib/creator-membership";
 import { useCreatorMembershipStatus } from "@/lib/use-creator-membership";
 import { useProfileImage } from "@/lib/use-profile-image";
 
-const myStats = [
-  { label: "가입 멤버십", value: "2" },
-  { label: "소장 작품", value: "18" },
-  { label: "내 작품", value: "4" },
-];
-
 const fallbackProfile = {
+  avatarSrc: "/figma/profile.png",
   bio: "감정선이 살아있는 캐릭터 일러스트와 판타지 세계관 작업을 올립니다.",
+  coverTitle: "내 창작 활동",
+  displayName: "내 프로필",
   followersLabel: "팔로워 0",
+  href: "/artist/user_123",
+  isFollowing: true,
+  membershipLabel: "멤버십 만들기",
+  stats: { commissions: 0, posts: 0, works: 0 },
+  tags: ["#창작", "#작업일지"],
   username: "user_123",
-} satisfies Pick<ArtistProfile, "bio" | "followersLabel" | "username">;
+} satisfies ArtistProfile;
 
 const myCollectionItems = [
   {
@@ -83,10 +99,26 @@ const myCreationItems = [
 }[];
 
 type MyPageClientProps = {
-  profile: Pick<ArtistProfile, "bio" | "followersLabel" | "username"> | null;
+  allProfiles: ArtistSummary[];
+  artworks: ArtworkDetail[];
+  collectionCount: number;
+  joinedMembershipCount: number;
+  posts: FeedPost[];
+  profile: ArtistProfile | null;
+  series: SeriesDetail[];
+  socialGraph: ArtistSocialGraph;
 };
 
-export function MyPageClient({ profile }: MyPageClientProps) {
+export function MyPageClient({
+  allProfiles,
+  artworks,
+  collectionCount,
+  joinedMembershipCount,
+  posts,
+  profile,
+  series,
+  socialGraph,
+}: MyPageClientProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const creatorMembershipStatus = useCreatorMembershipStatus();
   const myProfile = profile ?? fallbackProfile;
@@ -100,6 +132,11 @@ export function MyPageClient({ profile }: MyPageClientProps) {
     subscribeUserActionsChange,
     readUserActionSnapshot,
     () => defaultUserActionSnapshot,
+  );
+  const creatorArtworks = useSyncExternalStore(
+    subscribeCreatorArtworksChange,
+    readCreatorArtworks,
+    () => defaultCreatorArtworks,
   );
   const toastMessage = useSyncExternalStore(
     subscribeRouteToastChange,
@@ -117,6 +154,14 @@ export function MyPageClient({ profile }: MyPageClientProps) {
   const creatorMembershipItem = getCreatorMembershipMenuItem(
     creatorMembershipStatus,
   );
+  const visibleArtworkCount =
+    artworks.filter((artwork) => !isArtworkDeleted(actionSnapshot, artwork.slug))
+      .length + creatorArtworks.length;
+  const myStats = [
+    { label: "가입 멤버십", value: String(joinedMembershipCount) },
+    { label: "소장 작품", value: String(collectionCount) },
+    { label: "내 작품", value: String(visibleArtworkCount) },
+  ];
   const myCreations = [
     myCreationItems[0],
     {
@@ -176,6 +221,17 @@ export function MyPageClient({ profile }: MyPageClientProps) {
         : "계정을 비공개로 변경했습니다.",
     );
   };
+  const toggleFollowListVisibility = () => {
+    const nextVisibility =
+      appSettings.followListVisibility === "public" ? "private" : "public";
+
+    updateAppSettings({ followListVisibility: nextVisibility });
+    setStatusMessage(
+      nextVisibility === "public"
+        ? "팔로워/팔로잉 목록을 공개했습니다."
+        : "팔로워/팔로잉 목록을 숨겼습니다.",
+    );
+  };
   const unblockUsername = (username: string) => {
     setUsernameBlocked(username, false);
     setStatusMessage(`@${username} 차단을 해제했습니다.`);
@@ -227,9 +283,13 @@ export function MyPageClient({ profile }: MyPageClientProps) {
             <p className="mt-1 text-xs font-medium text-muted">
               @{myProfile.username}
             </p>
-            <p className="mt-2 text-xs font-medium text-primary">
-              {myProfile.followersLabel}
-            </p>
+            <FollowListDialog
+              allProfiles={allProfiles}
+              canManageFollowers
+              ownerDisplayName={myProfile.displayName}
+              ownerUsername={myProfile.username}
+              socialGraph={socialGraph}
+            />
           </div>
         </div>
 
@@ -309,6 +369,25 @@ export function MyPageClient({ profile }: MyPageClientProps) {
           </ActionButton>
         </div>
 
+        <div className="mt-1 flex items-center justify-between gap-4 rounded-md px-1 py-3 transition-colors hover:bg-panel">
+          <div className="min-w-0">
+            <p className="text-base font-semibold leading-5 text-foreground">
+              팔로워/팔로잉 목록
+            </p>
+            <p className="mt-1 text-xs font-medium leading-5 text-subtle">
+              현재{" "}
+              {appSettings.followListVisibility === "public" ? "공개" : "숨김"}{" "}
+              상태입니다.
+            </p>
+          </div>
+          <ActionButton
+            onClick={toggleFollowListVisibility}
+            variant="secondary"
+          >
+            {appSettings.followListVisibility === "public" ? "숨김" : "공개"}
+          </ActionButton>
+        </div>
+
         <div className="mt-1 rounded-md px-1 py-3 transition-colors hover:bg-panel">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
@@ -358,6 +437,13 @@ export function MyPageClient({ profile }: MyPageClientProps) {
           </UiCard>
         ))}
       </div>
+
+      <ArtistProfileTabs
+        artworks={artworks}
+        posts={posts}
+        profile={myProfile}
+        series={series}
+      />
 
       <section className="mt-7">
         <h2 className="text-base font-semibold">내 보관함</h2>

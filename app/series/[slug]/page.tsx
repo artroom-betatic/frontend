@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AppFrame } from "@/components/app-frame";
 import { BottomNav } from "@/components/bottom-nav";
 import { ContentListCard } from "@/components/content-list-card";
+import { DeleteContentButton } from "@/components/delete-content-button";
 import { FigmaTag } from "@/components/figma-controls";
 import { MobileHeader } from "@/components/mobile-header";
 import { ScreenSection } from "@/components/screen-section";
@@ -12,6 +13,7 @@ import {
   getSeriesDetail,
   getSeriesSlugs,
 } from "@/lib/catalog-data";
+import { MY_PROFILE_USERNAME } from "@/lib/my-profile";
 
 type SeriesPageProps = {
   params: Promise<{ slug: string }>;
@@ -85,6 +87,14 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           <p className="mt-5 text-sm leading-6 text-foreground">
             {series.description}
           </p>
+
+          {series.creator.username === MY_PROFILE_USERNAME ? (
+            <DeleteContentButton
+              contentId={series.slug}
+              contentType="series"
+              redirectHref={series.creator.href}
+            />
+          ) : null}
         </section>
 
         <div className="px-6">

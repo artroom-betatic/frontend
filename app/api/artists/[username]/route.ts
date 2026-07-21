@@ -1,4 +1,8 @@
-import { getArtistPosts, getArtistProfile } from "@/lib/feed-data";
+import {
+  getArtistPosts,
+  getArtistProfile,
+  getArtistSocialGraph,
+} from "@/lib/feed-data";
 
 type ArtistRouteContext = {
   params: Promise<{ username: string }>;
@@ -15,5 +19,6 @@ export async function GET(_request: Request, { params }: ArtistRouteContext) {
   return Response.json({
     posts: getArtistPosts(profile.username),
     profile,
+    socialGraph: getArtistSocialGraph(profile.username),
   });
 }

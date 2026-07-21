@@ -14,6 +14,8 @@ export type CreatorArtwork = {
 };
 
 export const CREATOR_ARTWORKS_STORAGE_KEY = "artroom:creator-artworks";
+export const CREATOR_ARTWORKS_DELETED_STORAGE_KEY =
+  "artroom:creator-artworks-deleted";
 export const CREATOR_ARTWORKS_UPDATED_EVENT =
   "artroom:creator-artworks-updated";
 
@@ -65,6 +67,8 @@ export const defaultCreatorArtworks: CreatorArtwork[] = [
 let cachedCreatorArtworksString: string | null = null;
 let cachedStoredCreatorArtworks: CreatorArtwork[] = [];
 let cachedCreatorArtworksSnapshot: CreatorArtwork[] = defaultCreatorArtworks;
+let cachedDeletedCreatorArtworkIdsString: string | null = null;
+let cachedDeletedCreatorArtworkIds: string[] = [];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -108,6 +112,62 @@ function normalizeArtwork(value: unknown): CreatorArtwork | null {
   };
 }
 
+function normalizeDeletedCreatorArtworkIds(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(value.filter((item): item is string => typeof item === "string")),
+  );
+}
+
+function readDeletedCreatorArtworkIds() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const storedIds = window.localStorage.getItem(
+    CREATOR_ARTWORKS_DELETED_STORAGE_KEY,
+  );
+
+  if (!storedIds) {
+    cachedDeletedCreatorArtworkIdsString = null;
+    cachedDeletedCreatorArtworkIds = [];
+    return [];
+  }
+
+  if (storedIds === cachedDeletedCreatorArtworkIdsString) {
+    return cachedDeletedCreatorArtworkIds;
+  }
+
+  try {
+    const nextIds = normalizeDeletedCreatorArtworkIds(JSON.parse(storedIds));
+
+    cachedDeletedCreatorArtworkIdsString = storedIds;
+    cachedDeletedCreatorArtworkIds = nextIds;
+
+    return nextIds;
+  } catch {
+    cachedDeletedCreatorArtworkIdsString = storedIds;
+    cachedDeletedCreatorArtworkIds = [];
+    return [];
+  }
+}
+
+function saveDeletedCreatorArtworkIds(ids: string[]) {
+  const nextIds = normalizeDeletedCreatorArtworkIds(ids);
+  const nextIdsString = JSON.stringify(nextIds);
+
+  window.localStorage.setItem(
+    CREATOR_ARTWORKS_DELETED_STORAGE_KEY,
+    nextIdsString,
+  );
+  cachedDeletedCreatorArtworkIdsString = nextIdsString;
+  cachedDeletedCreatorArtworkIds = nextIds;
+  window.dispatchEvent(new CustomEvent(CREATOR_ARTWORKS_UPDATED_EVENT));
+}
+
 function readStoredCreatorArtworks(): CreatorArtwork[] {
   if (typeof window === "undefined") {
     return [];
@@ -120,7 +180,9 @@ function readStoredCreatorArtworks(): CreatorArtwork[] {
   if (!storedArtworks) {
     cachedCreatorArtworksString = null;
     cachedStoredCreatorArtworks = [];
-    cachedCreatorArtworksSnapshot = defaultCreatorArtworks;
+    cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
+      (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
+    );
     return [];
   }
 
@@ -134,7 +196,9 @@ function readStoredCreatorArtworks(): CreatorArtwork[] {
     if (!Array.isArray(parsedArtworks)) {
       cachedCreatorArtworksString = storedArtworks;
       cachedStoredCreatorArtworks = [];
-      cachedCreatorArtworksSnapshot = defaultCreatorArtworks;
+      cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
+        (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
+      );
       return [];
     }
 
@@ -144,24 +208,38 @@ function readStoredCreatorArtworks(): CreatorArtwork[] {
 
     cachedCreatorArtworksString = storedArtworks;
     cachedStoredCreatorArtworks = nextArtworks;
+    const deletedIds = readDeletedCreatorArtworkIds();
+    const visibleDefaultArtworks = defaultCreatorArtworks.filter(
+      (artwork) => !deletedIds.includes(artwork.id),
+    );
+
     cachedCreatorArtworksSnapshot = nextArtworks.length
-      ? [...defaultCreatorArtworks, ...nextArtworks]
-      : defaultCreatorArtworks;
+      ? [...visibleDefaultArtworks, ...nextArtworks]
+      : visibleDefaultArtworks;
 
     return nextArtworks;
   } catch {
     cachedCreatorArtworksString = storedArtworks;
     cachedStoredCreatorArtworks = [];
-    cachedCreatorArtworksSnapshot = defaultCreatorArtworks;
+    cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
+      (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
+    );
     return [];
   }
 }
 
 function saveStoredCreatorArtworks(artworks: CreatorArtwork[]) {
-  window.localStorage.setItem(
-    CREATOR_ARTWORKS_STORAGE_KEY,
-    JSON.stringify(artworks),
+  const nextArtworksString = JSON.stringify(artworks);
+  const visibleDefaultArtworks = defaultCreatorArtworks.filter(
+    (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
   );
+
+  window.localStorage.setItem(CREATOR_ARTWORKS_STORAGE_KEY, nextArtworksString);
+  cachedCreatorArtworksString = nextArtworksString;
+  cachedStoredCreatorArtworks = artworks;
+  cachedCreatorArtworksSnapshot = artworks.length
+    ? [...visibleDefaultArtworks, ...artworks]
+    : visibleDefaultArtworks;
   window.dispatchEvent(new CustomEvent(CREATOR_ARTWORKS_UPDATED_EVENT));
 }
 
@@ -173,15 +251,23 @@ export function readCreatorArtworks() {
   const storedArtworks = window.localStorage.getItem(
     CREATOR_ARTWORKS_STORAGE_KEY,
   );
+  const storedDeletedIds = window.localStorage.getItem(
+    CREATOR_ARTWORKS_DELETED_STORAGE_KEY,
+  );
 
   if (!storedArtworks) {
     cachedCreatorArtworksString = null;
     cachedStoredCreatorArtworks = [];
-    cachedCreatorArtworksSnapshot = defaultCreatorArtworks;
-    return defaultCreatorArtworks;
+    cachedCreatorArtworksSnapshot = defaultCreatorArtworks.filter(
+      (artwork) => !readDeletedCreatorArtworkIds().includes(artwork.id),
+    );
+    return cachedCreatorArtworksSnapshot;
   }
 
-  if (storedArtworks === cachedCreatorArtworksString) {
+  if (
+    storedArtworks === cachedCreatorArtworksString &&
+    storedDeletedIds === cachedDeletedCreatorArtworkIdsString
+  ) {
     return cachedCreatorArtworksSnapshot;
   }
 
@@ -194,12 +280,32 @@ export function addCreatorArtwork(artwork: CreatorArtwork) {
   saveStoredCreatorArtworks([artwork, ...readStoredCreatorArtworks()]);
 }
 
+export function removeCreatorArtwork(artworkId: string) {
+  const storedArtworks = readStoredCreatorArtworks();
+  const storedArtwork = storedArtworks.find((artwork) => artwork.id === artworkId);
+
+  if (storedArtwork) {
+    saveStoredCreatorArtworks(
+      storedArtworks.filter((artwork) => artwork.id !== artworkId),
+    );
+    return;
+  }
+
+  saveDeletedCreatorArtworkIds([
+    ...readDeletedCreatorArtworkIds(),
+    artworkId,
+  ]);
+}
+
 export function subscribeCreatorArtworksChange(callback: () => void) {
   const handleCreatorArtworksUpdated = () => {
     callback();
   };
   const handleStorage = (event: StorageEvent) => {
-    if (event.key === CREATOR_ARTWORKS_STORAGE_KEY) {
+    if (
+      event.key === CREATOR_ARTWORKS_STORAGE_KEY ||
+      event.key === CREATOR_ARTWORKS_DELETED_STORAGE_KEY
+    ) {
       callback();
     }
   };

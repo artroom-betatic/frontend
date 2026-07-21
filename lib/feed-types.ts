@@ -21,11 +21,19 @@ export type ArtistProfile = ArtistSummary & {
   tags: string[];
 };
 
+export type ArtistSocialGraph = {
+  followers: ArtistSummary[];
+  following: ArtistSummary[];
+};
+
+export type FeedVisibility = "private" | "public";
+
 export type FeedPost = {
   artist: ArtistSummary;
   body: string;
   comments: number;
   commentsClosed?: boolean;
+  collaborators?: ArtistSummary[];
   createdAtLabel: string;
   href: string;
   id: string;
@@ -35,6 +43,7 @@ export type FeedPost = {
   likedBy: string;
   likes: number;
   tags: string[];
+  visibility?: FeedVisibility;
 };
 
 export type FeedImageSlide = {

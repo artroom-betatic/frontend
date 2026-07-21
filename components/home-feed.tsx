@@ -48,6 +48,8 @@ import {
   getFeedPostLikeCount,
   getStoredFeedComments,
   isFeedCommentPinned,
+  isFeedPostDeleted,
+  isFeedPostPrivate,
   isUsernameBlocked,
   isFeedPostBookmarked,
   isFeedPostLiked,
@@ -342,6 +344,8 @@ function FeedPostArticle({
     post.commentsClosed === true,
   );
   const isPostOwner = post.artist.username === MY_PROFILE_USERNAME;
+  const privatePost =
+    post.visibility === "private" || isFeedPostPrivate(actionSnapshot, post.id);
   const canOpenComments = isPostOwner || !commentSettings.commentsClosed;
   const likes = getFeedPostLikeCount(actionSnapshot, post.id, post.likes);
   const commentCount = getFeedPostCommentCount(
@@ -452,7 +456,16 @@ function FeedPostArticle({
             </p>
             <p className="mt-0.5 text-2xs font-medium text-muted">
               @{post.artist.username} · {post.createdAtLabel}
+              {privatePost ? " · 비공개" : ""}
             </p>
+            {post.collaborators?.length ? (
+              <p className="mt-0.5 truncate text-2xs font-semibold text-primary">
+                함께한 작가{" "}
+                {post.collaborators
+                  .map((collaborator) => `@${collaborator.username}`)
+                  .join(", ")}
+              </p>
+            ) : null}
           </div>
         </Link>
         <div className="flex shrink-0 items-center gap-1">
@@ -467,6 +480,7 @@ function FeedPostArticle({
           </ActionButton>
           <FeedInterestMenu
             artistUsername={post.artist.username}
+            initialPrivate={privatePost}
             postId={post.id}
           />
         </div>
@@ -625,9 +639,19 @@ export function HomeFeed() {
   );
   const displayedPosts = useMemo(
     () =>
-      sortFeedPostsByContentDisplay(mergedPosts, appSettings.contentDisplay).filter(
-        (post) => !isUsernameBlocked(actionSnapshot, post.artist.username),
-      ),
+      sortFeedPostsByContentDisplay(
+        mergedPosts,
+        appSettings.contentDisplay,
+      ).filter((post) => {
+        const privatePost =
+          post.visibility === "private" || isFeedPostPrivate(actionSnapshot, post.id);
+
+        return (
+          !isFeedPostDeleted(actionSnapshot, post.id) &&
+          !isUsernameBlocked(actionSnapshot, post.artist.username) &&
+          (post.artist.username === MY_PROFILE_USERNAME || !privatePost)
+        );
+      }),
     [actionSnapshot, appSettings.contentDisplay, mergedPosts],
   );
   const selectedContentDisplayOption = useMemo(
